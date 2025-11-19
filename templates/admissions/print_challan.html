@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+  body { background: #f5f5f5; }
+  .challan-container {
+    background: white;
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #000;
+    font-family: 'Arial', sans-serif;
+    font-size: 13px;
+  }
+
+  .challan-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  .challan-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .challan-copy {
+    width: 49%;
+    border: 1px solid #000;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .college-logo {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+  }
+
+  .title { text-align: center; font-weight: bold; font-size: 15px; text-transform: uppercase; margin-bottom: 2px; }
+  .subtitle { text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 6px; }
+
+  .bank-info {
+    border: 1px solid #999;
+    padding: 8px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .bank-info .issued {
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  td { padding: 3px; border: 1px solid #999; vertical-align: top; }
+  .bank-stamp-row { margin-top: 18px; font-size: 12px; text-align: center; }
+
+  .deposited-row {
+    margin-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .deposited-by {
+    width: 60%;
+    text-align: left;
+  }
+  .bank-stamp-box {
+    width: 35%;
+    text-align: center;
+  }
+
+  .deposit-line {
+    border-top: 1px dashed #777;
+    padding-top: 6px;
+    margin-bottom: 4px;
+  }
+
+  .bank-stamp {
+    margin-top: 6px;
+    font-size: 12px;
+    text-align: center;
+    border-top: 1px dashed #777;
+    padding-top: 6px;
+  }
+
+  .print-btn { text-align: center; margin-top: 20px; }
+  .small-note { font-size: 12px; color: #333; }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+  }
+</style>
+
+<div class="challan-container">
+  <div class="challan-header">
+    <strong>Challan Form</strong>
+    <span><em>Issue Date:</em> {{ application.challan_date }}</span>
+  </div>
+
+  <div class="challan-columns">
+
+    <!-- BANK COPY -->
+    <div class="challan-copy">
+      <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+        <img src="/static/images/logo.png" alt="Logo" class="college-logo">
+        <div>
+          <div class="title">Military College Murree</div>
+          <div class="subtitle"><p><strong>{{ application.entry|default:"Entry Not Assigned" }}</strong></p></div>
+        </div>
+      </div>
+
+      <p style="text-align:center; font-weight:bold; margin-bottom:8px;">BANK COPY</p>
+
+      <!-- Bank account info block (top) -->
+      <div class="bank-info">
+        <div class="issued">Issued Date: {{ application.challan_date }}</div>
+
+        <div class="small-note">
+          <strong>Option-I</strong> REGISTRATION FEE SLIP – MILITARY COLLEGE MURREE<br>
+          Askari Bank Account No.: <strong>03101650001634</strong>
+        </div>
+        <hr style="margin:8px 0;">
+        <div class="small-note">
+          <strong>Option-II</strong> Habib Bank Limited Account No.: <strong>17917901670003</strong>
+        </div>
+
+        <div style="margin-top:8px; font-size:13px;">
+          <strong>Cash Receiving Branch Name/Code No:</strong><br>
+          (Fill at bank) 
+        </div>
+      </div>
+
+      <table>
+        <tr><td style="width:40%"><strong>Challan Form #:</strong></td><td>{{ application.challan_no }}</td></tr>
+        <tr><td><strong>Name of Candidate:</strong></td><td>{{ application.name }}</td></tr>
+        <tr><td><strong>Father's Name:</strong></td><td>{{ application.father_name }}</td></tr>
+        <tr><td><strong>Category:</strong></td><td>{{ application.get_category_display }}</td></tr>
+        <tr>
+          <td><strong>Amount:</strong></td>
+          <td><strong>Rs {{ amount }}</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Issue Date:</strong></td>
+          <td>{{ application.challan_date }}</td>
+        </tr>
+        <tr>
+          <td><strong>Status:</strong></td>
+          <td>
+            {% if is_late %}
+              <span style="color:red;">Late Fee Applied</span>
+            {% else %}
+              Normal Fee
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+
+      <!-- Deposited by + Bank stamp -->
+      <div class="deposited-row">
+        <div class="deposited-by">
+          <div class="deposit-line">............................................................</div>
+          <div style="font-size:12px; margin-top:6px;">Deposited by</div>
+        </div>
+
+        <div class="bank-stamp-box">
+          <div class="bank-stamp">............................................................</div>
+          <div style="font-size:12px; margin-top:6px;">BANK STAMP</div>
+        </div>
+        
+      </div>
+            <div style="margin-top:8px; font-size:12px;">
+        <strong>Teller's Signature:</strong> ______________________
+      </div>
+
+    </div>
+
+    <!-- CANDIDATE COPY -->
+    <div class="challan-copy">
+      <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+        <img src="/static/images/logo.png" alt="Logo" class="college-logo">
+        <div>
+          <div class="title">Military College Murree</div>
+          <div class="subtitle"><p><strong>{{ application.entry|default:"Entry Not Assigned" }}</strong></p></div>
+        </div>
+      </div>
+
+      <p style="text-align:center; font-weight:bold; margin-bottom:8px;">CANDIDATE COPY</p>
+
+      <!-- Bank account info block (top) -->
+      <div class="bank-info">
+        <div class="issued">Issued Date: {{ application.challan_date }}</div>
+
+        <div class="small-note">
+          <strong>Option-I</strong> REGISTRATION FEE SLIP – MILITARY COLLEGE MURREE<br>
+          Askari Bank Account No.: <strong>03101650001634</strong>
+        </div>
+        <hr style="margin:8px 0;">
+        <div class="small-note">
+          <strong>Option-II</strong> Habib Bank Limited Account No.: <strong>17917901670003</strong>
+        </div>
+
+        <div style="margin-top:8px; font-size:13px;">
+          <strong>Cash Receiving Branch Name/Code No:</strong><br>
+          (Fill at bank)
+        </div>
+      </div>
+
+      <table>
+        <tr><td style="width:40%"><strong>Challan Form #:</strong></td><td>{{ application.challan_no }}</td></tr>
+        <tr><td><strong>Name of Candidate:</strong></td><td>{{ application.name }}</td></tr>
+        <tr><td><strong>Father's Name:</strong></td><td>{{ application.father_name }}</td></tr>
+        <tr><td><strong>Category:</strong></td><td>{{ application.get_category_display }}</td></tr>
+        <tr>
+          <td><strong>Amount:</strong></td>
+          <td><strong>Rs {{ amount }}</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Issue Date:</strong></td>
+          <td>{{ application.challan_date }}</td>
+        </tr>
+        <tr>
+          <td><strong>Status:</strong></td>
+          <td>{% if is_late %}<span style="color:red;">Late Fee Applied</span>{% else %}Normal Fee{% endif %}</td>
+        </tr>
+      </table>
+
+      <!-- Deposited by + Candidate Signature / Bank stamp -->
+      <div class="deposited-row">
+        <div class="deposited-by">
+          <div class="deposit-line">............................................................</div>
+          <div style="font-size:12px; margin-top:6px;">Deposited by</div>
+        </div>
+
+        <div class="bank-stamp-box">
+          <div class="bank-stamp">............................................................</div>
+          <div style="font-size:12px; margin-top:6px;">BANK STAMP</div>
+        </div>
+      </div>
+     
+      <div style="margin-top:8px; font-size:12px;">
+        <strong>Teller's Signature:</strong> ______________________
+      </div>
+
+    </div>
+  </div>
+
+  <div class="print-btn">
+    <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      🖨️ Print / Download PDF
+    </button>
+  </div>
+</div>
+
+{% endblock %}

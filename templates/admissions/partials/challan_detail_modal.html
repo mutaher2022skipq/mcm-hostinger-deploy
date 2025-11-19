@@ -1,0 +1,157 @@
+<div class="p-4 animate-modal-open"> 
+  <!-- Header -->
+  <h3 class="text-xl font-bold text-mcmGreen border-b border-gray-200 pb-2 mb-4 flex items-center gap-2">
+    💳 <span>Challan Details</span>
+  </h3>
+
+  <!-- Applicant Info -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+    <div>
+      <p class="font-semibold text-gray-900">Name:</p>
+      <p>{{ app.name|default:"—" }}</p>
+    </div>
+    <div>
+      <p class="font-semibold text-gray-900">Father Name:</p>
+      <p>{{ app.father_name|default:"—" }}</p>
+    </div>
+
+    <div>
+      <p class="font-semibold text-gray-900">Category:</p>
+      <p>{{ app.get_category_display|default:"—" }}</p>
+    </div>
+    <div>
+      <p class="font-semibold text-gray-900">Challan No:</p>
+      <p>{{ app.challan_no|default:"—" }}</p>
+    </div>
+
+    <div>
+      <p class="font-semibold text-gray-900">Amount:</p>
+      <p>Rs {{ app.amount|default:"—" }}</p>
+    </div>
+    <div>
+      <p class="font-semibold text-gray-900">Date:</p>
+      <p>{{ app.challan_date|date:"M d, Y"|default:"—" }}</p>
+    </div>
+
+    <div>
+      <p class="font-semibold text-gray-900">Status:</p>
+      {% if app.payment_status == "verified" %}
+        <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">Verified</span>
+      {% elif app.payment_status == "rejected" %}
+        <span class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded">Rejected</span>
+      {% elif app.payment_status == "under_review" %}
+        <span class="bg-yellow-100 text-yellow-700 text-xs font-semibold px-2 py-1 rounded">Under Review</span>
+      {% else %}
+        <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-1 rounded">Pending</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="border-t border-gray-200 my-4"></div>
+
+  <!-- Uploaded Proof -->
+  <div>
+    <p class="font-semibold text-gray-900 mb-2">Uploaded Challan Slip:</p>
+    {% if app.payment_proof %}
+      <div class="flex justify-center">
+        <img src="{{ app.payment_proof.url }}" 
+             alt="Challan Slip"
+             class="max-h-64 rounded-lg shadow-md border border-gray-200 object-contain transform transition hover:scale-105 duration-200">
+      </div>
+      <div class="text-center mt-3 space-x-4">
+        <a href="{{ app.payment_proof.url }}" target="_blank" 
+           class="text-blue-600 hover:text-blue-800 text-sm font-semibold underline">
+           🔍 View Full Image
+        </a>
+
+        <!-- ✅ NEW BUTTON: Redirect to Full Applicant Detail Page -->
+        <a href="{% url 'admissions:view_applicant' app.id %}" 
+           class="text-mcmGreen hover:text-mcmOlive font-semibold text-sm underline">
+           🧾 Full Applicant Details
+        </a>
+      </div>
+    {% else %}
+      <p class="text-gray-500 italic text-center">No challan slip uploaded.</p>
+      <div class="text-center mt-3">
+        <!-- ✅ NEW BUTTON (still show even if no slip) -->
+        <a href="{% url 'admissions:view_applicant' app.id %}" 
+           class="text-mcmGreen hover:text-mcmOlive font-semibold text-sm underline">
+           🧾 View Full Applicant Details
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Divider -->
+  <div class="border-t border-gray-200 my-4"></div>
+
+  <!-- ✅ Quick Action Bar -->
+  <div class="flex justify-end gap-3 mt-4">
+    <button onclick="confirmAction('{{ app.id }}', 'verify')" 
+            class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition transform hover:scale-105">
+      ✅ Verify
+    </button>
+    <button onclick="confirmAction('{{ app.id }}', 'reject')" 
+            class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition transform hover:scale-105">
+      ❌ Reject
+    </button>
+    <button onclick="closeModal()" 
+            class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm hover:bg-gray-400 transition transform hover:scale-105">
+      ✖ Close
+    </button>
+  </div>
+</div>
+
+<!-- 🌟 Animation Style -->
+<style>
+@keyframes modalOpen {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-open {
+  animation: modalOpen 0.25s ease-out forwards;
+}
+</style>
+
+<!-- ✅ Working JS Logic -->
+<script>
+function confirmAction(appId, action) {
+  if (!confirm(`Are you sure you want to ${action} this challan?`)) return;
+
+  const button = event.target;
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = action === 'verify' ? 'Verifying...' : 'Rejecting...';
+
+  fetch(`/admissions/verify-fees/${appId}/${action}/`, {
+    method: 'GET',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`Challan successfully ${action}ed!`);
+      closeModal();
+      location.reload(); // Refresh dashboard to show updated status
+    } else {
+      alert('Action failed. Please try again.');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Something went wrong!');
+  })
+  .finally(() => {
+    button.disabled = false;
+    button.textContent = originalText;
+  });
+}
+</script>

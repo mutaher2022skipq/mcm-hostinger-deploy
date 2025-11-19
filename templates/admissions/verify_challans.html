@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-mcmGreen">💳 Fee Verification Panel</h2>
+      <p class="text-gray-500 text-sm mt-1">Manage and verify submitted challan forms</p>
+    </div>
+    <a href="{% url 'admissions:dashboard' %}" 
+       class="bg-mcmGreen text-white px-4 py-2 rounded-lg hover:bg-mcmOlive transition shadow">
+       ← Back to Dashboard
+    </a>
+  </div>
+
+  <!-- ✅ Filter Form -->
+  <form method="get" class="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-sm items-end">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+      <select name="category" class="border border-gray-300 rounded-lg px-3 py-2 w-56 focus:ring-2 focus:ring-mcmGreen">
+        <option value="">All</option>
+        {% for code, label in categories %}
+          <option value="{{ code }}" {% if category_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+      <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 w-48 focus:ring-2 focus:ring-mcmGreen">
+        <option value="">All</option>
+        {% for code, label in statuses %}
+          <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <button type="submit" class="bg-mcmGreen text-white px-5 py-2 rounded-lg hover:bg-mcmOlive transition shadow">
+        Apply Filters
+      </button>
+      <a href="{% url 'admissions:verify_challans' %}" 
+         class="ml-3 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition shadow">
+        Reset
+      </a>
+    </div>
+  </form>
+
+  <!-- ✅ Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+      <thead class="bg-mcmGreen text-white text-sm uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">Photo</th>
+          <th class="px-4 py-3 text-left">Name</th>
+          <th class="px-4 py-3 text-left">Category</th>
+          <th class="px-4 py-3 text-left">Amount</th>
+          <th class="px-4 py-3 text-left">Status</th>
+          <th class="px-4 py-3 text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="text-sm text-gray-700 divide-y divide-gray-200 bg-gray-50">
+        {% for app in challans %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2">
+            {% if app.photo %}
+              <img src="{{ app.photo.url }}" class="w-12 h-12 rounded-full object-cover">
+            {% else %}
+              <span class="text-gray-400">N/A</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 font-semibold">{{ app.name }}</td>
+          <td class="px-4 py-2">{{ app.get_category_display|default:"—" }}</td>
+          <td class="px-4 py-2">Rs {{ app.amount|default:"—" }}</td>
+          <td class="px-4 py-2 text-center">
+            {% if app.payment_status == "verified" %}
+              <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">Verified</span>
+            {% elif app.payment_status == "rejected" %}
+              <span class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded">Rejected</span>
+            {% elif app.payment_status == "under_review" %}
+              <span class="bg-yellow-100 text-yellow-700 text-xs font-semibold px-2 py-1 rounded">Under Review</span>
+            {% else %}
+              <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-1 rounded">Pending</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 text-center">
+            <button onclick="showDetailsModal('{{ app.id }}')" 
+                    class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-xs">🔍 View</button>
+            <button onclick="confirmAction('{{ app.id }}', 'verify')" 
+                    class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-xs ml-1">✅ Verify</button>
+            <button onclick="confirmAction('{{ app.id }}', 'reject')" 
+                    class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-xs ml-1">❌ Reject</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-4 text-gray-500">No challans found for selected filters.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ✅ Glassy Slide-Up Modal with Spinner -->
+<div id="detailsModal" 
+     class="fixed inset-0 hidden items-center justify-center z-50 backdrop-blur-sm bg-black/30 opacity-0 transition-all duration-300 ease-in-out">
+  <div id="modalBox"
+       class="bg-white p-6 rounded-2xl shadow-2xl max-w-lg w-full relative transform translate-y-6 scale-95 opacity-0 transition-all duration-300 ease-in-out">
+    <button onclick="closeModal()" 
+            class="absolute top-3 right-3 text-gray-500 hover:text-red-600 text-lg font-bold">✖</button>
+    
+    <!-- Spinner -->
+    <div id="modalSpinner" class="flex justify-center items-center py-12">
+      <div class="w-10 h-10 border-4 border-mcmGreen border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <div id="modalContent" class="hidden"></div>
+  </div>
+</div>
+
+<script>
+function confirmAction(appId, action) {
+  const msg = action === 'verify' ? 'mark this challan as VERIFIED?' : 'REJECT this challan?';
+  const color = action === 'verify' ? '#16a34a' : '#dc2626';
+  Swal.fire({
+    title: 'Are you sure?',
+    text: `You are about to ${msg}`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: color,
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, proceed!',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `/admissions/verify-fees/${appId}/${action}/`;
+    }
+  });
+}
+
+// ✅ Show modal + Spinner + Animate
+function showDetailsModal(appId) {
+  const overlay = document.getElementById("detailsModal");
+  const modal = document.getElementById("modalBox");
+  const spinner = document.getElementById("modalSpinner");
+  const content = document.getElementById("modalContent");
+
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+
+  setTimeout(() => {
+    overlay.classList.add("opacity-100");
+    modal.classList.remove("translate-y-6", "scale-95", "opacity-0");
+    modal.classList.add("translate-y-0", "scale-100", "opacity-100");
+  }, 10);
+
+  spinner.classList.remove("hidden");
+  content.classList.add("hidden");
+
+  fetch(`/admissions/challan-details/${appId}/`)
+    .then(response => response.text())
+    .then(html => {
+      content.innerHTML = html;
+      spinner.classList.add("hidden");
+      content.classList.remove("hidden");
+    });
+}
+
+function closeModal() {
+  const overlay = document.getElementById("detailsModal");
+  const modal = document.getElementById("modalBox");
+
+  overlay.classList.remove("opacity-100");
+  modal.classList.remove("translate-y-0", "scale-100", "opacity-100");
+  modal.classList.add("translate-y-6", "scale-95", "opacity-0");
+
+  setTimeout(() => {
+    overlay.classList.remove("flex");
+    overlay.classList.add("hidden");
+  }, 250);
+}
+</script>
+
+{% endblock %}

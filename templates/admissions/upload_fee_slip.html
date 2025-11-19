@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow">
+  <h2 class="text-xl font-bold mb-4 text-gray-800">Upload Paid Challan</h2>
+
+  <form method="POST" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-gray-700 font-semibold mb-2">Select Paid Challan Image:</label>
+      <input type="file" name="payment_proof" accept="image/*" required
+             class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+      Upload
+    </button>
+  </form>
+
+  <p class="mt-4 text-sm text-gray-600">
+    Current Status:
+    <span class="font-semibold text-yellow-600">{{ application.payment_status|capfirst }}</span>
+  </p>
+
+  {% if application.payment_proof %}
+  <div class="mt-4">
+    <p class="text-sm text-gray-700">Uploaded Slip Preview:</p>
+    <img src="{{ application.payment_proof.url }}" alt="Fee Slip" class="mt-2 rounded shadow w-full max-w-sm">
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

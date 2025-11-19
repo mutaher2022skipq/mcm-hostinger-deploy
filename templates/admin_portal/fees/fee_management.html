@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto p-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-mcmGreen flex items-center gap-2">
+            💰 Fee Management Panel
+        </h1>
+
+        <a href="{% url 'admissions:admin_dashboard' %}"
+           class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 shadow">
+            ⬅ Back to Dashboard
+        </a>
+    </div>
+
+    <!-- SELECT CLASS -->
+    <div class="bg-white rounded-xl shadow p-5 border border-gray-200 mb-6">
+
+        <label class="block mb-2 font-semibold text-gray-700">Select Class</label>
+
+        <form method="get">
+            <select name="class" id="feeClassSelect" onchange="this.form.submit()"
+                    class="w-64 p-2 rounded border-gray-300 shadow-sm focus:ring-mcmGreen focus:border-mcmGreen">
+                <option value="">— Choose Class —</option>
+                <option value="VIII" {% if selected_class == 'VIII' %}selected{% endif %}>Class VIII</option>
+                <option value="XI" {% if selected_class == 'XI' %}selected{% endif %}>Class XI</option>
+            </select>
+        </form>
+
+    </div>
+
+    <!-- NOTHING SELECTED -->
+    {% if not fee_config %}
+        <div class="p-6 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl text-center shadow">
+            ⚠ No Fee Configuration found. Please select a class above.
+        </div>
+    {% else %}
+
+    <!-- CONFIGURATION CARD -->
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 p-6 mb-10">
+
+        <h2 class="text-xl font-bold text-mcmGreen mb-4">
+            🗂 {{ fee_config.class_name }} — Fee Configuration
+        </h2>
+
+        <form method="post" action="{% url 'admissions:fee_management' %}?class={{ selected_class|urlencode }}">
+            {% csrf_token %}
+            <!-- hidden input: ensures POST knows which class is being edited -->
+            <input type="hidden" name="selected_class" value="{{ selected_class }}">
+
+            <!-- DEADLINES -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                <div>
+                    <label class="font-semibold text-gray-700">Normal Deadline</label>
+                    <input type="date" name="normal_deadline"
+                           value="{{ fee_config.normal_deadline|date:'Y-m-d' }}"
+                           class="w-full p-2 mt-1 border rounded">
+                </div>
+
+                <div>
+                    <label class="font-semibold text-gray-700">Late Deadline</label>
+                    <input type="date" name="late_deadline"
+                           value="{{ fee_config.late_deadline|date:'Y-m-d' }}"
+                           class="w-full p-2 mt-1 border rounded">
+                </div>
+
+                <div>
+                    <label class="font-semibold text-gray-700">Final Deadline</label>
+                    <input type="date" name="final_deadline"
+                           value="{{ fee_config.final_deadline|date:'Y-m-d' }}"
+                           class="w-full p-2 mt-1 border rounded">
+                </div>
+            </div>
+
+            <label class="flex items-center gap-2 mb-6">
+                <input type="checkbox" name="stop_after_final"
+                       {% if fee_config.stop_after_final %}checked{% endif %}
+                       class="h-5 w-5">
+                <span class="text-gray-700 font-medium">Stop new applications after final deadline</span>
+            </label>
+
+            <!-- CLASS XI (FLAT FEES) -->
+            {% if fee_config.class_name == "XI" %}
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
+                <h3 class="font-bold text-blue-700 mb-3">Class XI — Flat Fee System</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label class="font-semibold">Normal Fee</label>
+                        <input type="number" name="base_fee"
+                               value="{{ fee_config.base_fee }}"
+                               class="w-full p-2 mt-1 border rounded">
+                    </div>
+
+                    <div>
+                        <label class="font-semibold">Double Fee</label>
+                        <input type="number" name="double_fee"
+                               value="{{ fee_config.double_fee }}"
+                               class="w-full p-2 mt-1 border rounded">
+                    </div>
+
+                    <div>
+                        <label class="font-semibold">Triple Fee</label>
+                        <input type="number" name="triple_fee"
+                               value="{{ fee_config.triple_fee }}"
+                               class="w-full p-2 mt-1 border rounded">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- CLASS VIII CATEGORY TABLE -->
+            {% if fee_config.class_name == "VIII" %}
+            <div class="bg-green-50 border border-green-200 rounded-xl p-5">
+                <h3 class="text-lg font-bold text-green-700 mb-3">Class VIII — Category-Based Fee Structure</h3>
+
+                <table class="w-full text-sm border shadow-sm rounded-xl overflow-hidden">
+                    <thead class="bg-mcmGreen text-white">
+                        <tr>
+                            <th class="p-2 text-left">Category</th>
+                            <th class="p-2 text-right">Normal</th>
+                            <th class="p-2 text-right">Late</th>
+                            <th class="p-2 text-right">Final</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for cat in category_configs %}
+                        <tr class="odd:bg-gray-50">
+                            <td class="p-2 font-medium">{{ cat.category }}</td>
+
+                            <td class="p-2">
+                                <input type="number" name="normal_{{ cat.id }}"
+                                    value="{{ cat.normal_fee }}"
+                                    class="w-full text-right p-1 border rounded">
+                            </td>
+
+                            <td class="p-2">
+                                <input type="number" name="late_{{ cat.id }}"
+                                    value="{{ cat.late_fee }}"
+                                    class="w-full text-right p-1 border rounded">
+                            </td>
+
+                            <td class="p-2">
+                                <input type="number" name="final_{{ cat.id }}"
+                                    value="{{ cat.final_fee }}"
+                                    class="w-full text-right p-1 border rounded">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- SAVE BUTTON -->
+            <div class="mt-8 flex justify-end">
+                <button type="submit"
+                        class="px-6 py-3 bg-mcmGreen text-white rounded-lg font-bold shadow hover:bg-mcmOlive">
+                    💾 Save Fee Configuration
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Load JavaScript -->
+<script src="{% static 'js/fee_preview_ajax.js' %}"></script>
+{% endblock %}

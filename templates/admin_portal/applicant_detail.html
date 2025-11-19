@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="max-w-6xl mx-auto bg-white p-8 mt-10 rounded-2xl shadow-lg border border-gray-200">
+  
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row justify-between items-center border-b pb-4 mb-6">
+    <h1 class="text-2xl font-bold text-mcmGreen flex items-center gap-2">
+      🧾 Full Applicant Details
+    </h1>
+    <div class="flex gap-3 mt-3 md:mt-0">
+      <button onclick="window.print()" 
+              class="bg-mcmGold text-gray-900 px-4 py-2 rounded-lg font-semibold shadow hover:bg-yellow-400 transition">
+        🖨️ Print Application
+      </button>
+      <a href="{% url 'admissions:admin_dashboard' %}" 
+         class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition">
+        ⬅ Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Applicant Core Details -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-800 text-sm">
+    <p><strong>Name:</strong> {{ app.name }}</p>
+    <p><strong>Father's Name:</strong> {{ app.father_name }}</p>
+    <p><strong>Date of Birth:</strong> {{ app.dob|date:"M d, Y" }}</p>
+    <p><strong>Class Applied:</strong> {{ app.user.class_applied|default:"—" }}</p>
+    <p><strong>Category:</strong> {{ app.get_category_display }}</p>
+    <p><strong>Test Center:</strong> {{ app.get_test_center_display|default:"—" }}</p>
+    <p><strong>Status:</strong> 
+      <span class="font-semibold {% if app.status == 'verified' %}text-green-600{% elif app.status == 'rejected' %}text-red-600{% else %}text-gray-600{% endif %}">
+        {{ app.status|title }}
+      </span>
+    </p>
+    <p><strong>Payment Status:</strong> 
+      <span class="font-semibold {% if app.payment_status == 'verified' %}text-green-600{% elif app.payment_status == 'rejected' %}text-red-600{% else %}text-gray-600{% endif %}">
+        {{ app.payment_status|title }}
+      </span>
+    </p>
+    <p><strong>Roll Number:</strong> {{ app.roll_number|default:"—" }}</p>
+  </div>
+
+  <!-- Divider -->
+  <div class="border-t border-gray-200 my-6"></div>
+
+  <!-- Photo Section -->
+  {% if app.photo %}
+  <div class="mb-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">📸 Applicant Photo</h3>
+    <img src="{{ app.photo.url }}" alt="Applicant Photo" class="w-40 rounded-xl shadow border border-gray-300">
+  </div>
+  {% endif %}
+
+  <!-- Challan Information -->
+  <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 mb-6">
+    <h3 class="text-lg font-semibold text-mcmGreen mb-3">💳 Challan Information</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+      <p><strong>Challan No:</strong> {{ app.challan_no|default:"—" }}</p>
+      <p><strong>Challan Date:</strong> {{ app.challan_date|date:"M d, Y"|default:"—" }}</p>
+      <p><strong>Fee Amount:</strong> Rs {{ app.amount|default:"—" }}</p>
+      <p><strong>Total Fee (Original):</strong> Rs {{ app.total_fee|default:"—" }}</p>
+    </div>
+  </div>
+
+  <!-- Payment Proof Section -->
+  <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+    <h3 class="text-lg font-semibold text-mcmGreen mb-3">🏦 Bank Challan / Payment Slip</h3>
+    {% if app.payment_proof %}
+      <div class="flex flex-col items-center">
+        <img src="{{ app.payment_proof.url }}" 
+             alt="Payment Proof" 
+             class="max-h-96 rounded-lg shadow border border-gray-200 object-contain mb-3">
+        <a href="{{ app.payment_proof.url }}" target="_blank"
+           class="text-blue-600 hover:text-blue-800 underline text-sm font-semibold">
+           🔍 View Full Image
+        </a>
+      </div>
+    {% else %}
+      <p class="text-gray-500 italic">No payment proof uploaded yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Print Styles -->
+<style>
+@media print {
+  body {
+    background: white !important;
+  }
+  a, button {
+    display: none !important;
+  }
+  .shadow, .border, .rounded-xl {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+</style>
+
+{% endblock %}

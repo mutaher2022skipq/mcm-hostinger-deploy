@@ -1,0 +1,191 @@
+{% extends 'base.html' %} 
+{% block content %}
+
+<div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-mcmGreen">🎓 Student Dashboard</h2>
+      <p class="text-gray-500 text-sm mt-1">
+        Welcome, <strong>{{ request.user.username }}</strong>
+      </p>
+    </div>
+
+    <div class="text-right">
+      <p class="text-sm text-gray-600">
+        <strong>Class Applied:</strong> {{ request.user.class_applied|default:"Not selected" }}
+      </p>
+      <p class="text-sm text-gray-600">
+        <strong>DOB:</strong> {{ request.user.dob|date:"M d, Y"|default:"—" }}
+      </p>
+    </div>
+  </div>
+
+  <!-- PROGRESS + STATUS -->
+  <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+
+    <!-- Circular Progress Chart -->
+    <div class="flex flex-col items-center">
+      <div class="relative w-36 h-36">
+        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+          <path class="text-gray-300" stroke-width="3" fill="none"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path class="text-mcmGold stroke-current" stroke-width="3" fill="none"
+            stroke-dasharray="{{ progress }}, 100"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-mcmGreen font-semibold text-sm">
+          {{ label }}
+        </span>
+      </div>
+
+      <p class="text-xs text-gray-500 mt-2">
+        Application Status: 
+        {% if application.status == 'verified' %}
+          <span class="text-green-600 font-semibold">Verified</span>
+        {% elif application.status == 'submitted' %}
+          <span class="text-blue-600 font-semibold">Submitted</span>
+        {% elif application.status == 'payment_pending' %}
+          <span class="text-yellow-600 font-semibold">Payment Pending</span>
+        {% elif application.status == 'draft' %}
+          <span class="text-gray-600 font-semibold">Draft</span>
+        {% else %}
+          <span class="text-gray-400 font-semibold">Not Started</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="bg-gray-50 rounded-xl p-6 shadow-inner w-full md:w-2/3">
+      <h3 class="text-lg font-bold text-mcmGreen mb-3">📋 Application Summary</h3>
+
+      <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+
+        <p><strong>Status:</strong> {{ application.status|title }}</p>
+        <p><strong>Submission Date:</strong> {{ application.submission_date|default:"Not Submitted" }}</p>
+
+        <!-- DYNAMIC FEE SECTION -->
+        <p>
+          <strong>Fee Amount:</strong>
+          {% if admissions_closed %}
+              <span class="text-red-600 font-semibold">Admissions Closed</span>
+          {% elif amount %}
+              Rs {{ amount }}
+          {% else %}
+              <span class="text-gray-500 italic">Not assigned yet</span>
+          {% endif %}
+        </p>
+
+        <p>
+          <strong>Fee Tier:</strong>
+          {% if fee_tier == "normal" %}
+            <span class="text-green-600 font-semibold">Normal</span>
+          {% elif fee_tier == "late" %}
+            <span class="text-yellow-600 font-semibold">Late Fee</span>
+          {% elif fee_tier == "double" %}
+            <span class="text-blue-600 font-semibold">Double Fee</span>
+          {% elif fee_tier == "triple" %}
+            <span class="text-purple-600 font-semibold">Triple Fee</span>
+          {% elif fee_tier == "final" %}
+            <span class="text-red-600 font-semibold">Final Late Fee</span>
+          {% else %}
+            <span class="text-gray-500 italic">—</span>
+          {% endif %}
+        </p>
+
+        <p><strong>Category:</strong> {{ application.get_category_display|default:"Not Selected" }}</p>
+        <p><strong>Entry:</strong> {{ application.entry|default:"Entry Not Assigned" }}</p>
+        <p><strong>Challan #:</strong> {{ application.challan_no|default:"—" }}</p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ROLL NUMBER SECTION -->
+  {% if application.roll_number %}
+    <div class="mt-8 bg-green-50 border border-green-200 rounded-xl p-5 text-center shadow-md">
+      <h3 class="text-lg font-bold text-green-700 mb-1">🎟️ Roll Number Assigned</h3>
+      <p class="text-2xl font-extrabold text-green-800 tracking-widest">{{ application.roll_number }}</p>
+      <p class="text-sm text-green-600 mt-1">Please note this for your written test.</p>
+
+      {% if application.status == 'verified' and application.roll_slip %}
+        <div class="mt-4">
+          <a href="{% url 'admissions:download_roll_slip_dashboard' %}" 
+             class="inline-block bg-mcmGreen text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-mcmOlive transition transform hover:scale-105">
+            🎫 Download Roll Number Slip
+          </a>
+          <p class="text-gray-500 text-xs mt-2">
+            Bring this printed slip to your test center.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+  {% elif application.status == 'verified' %}
+    <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center shadow-md">
+      <p class="text-yellow-700 font-semibold">Roll number will be issued shortly.</p>
+    </div>
+  {% endif %}
+
+  <!-- ACTION BUTTONS -->
+  <div class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <a href="{% url 'admissions:complete_form' %}" 
+       class="flex items-center justify-center bg-mcmGreen text-white py-3 rounded-xl font-semibold hover:bg-mcmOlive transition shadow-md">
+      ✍️ Complete Application Form
+    </a>
+
+    <a href="{% url 'admissions:view_application' %}"
+       class="flex items-center justify-center bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition shadow-md">
+      📄 View Submitted Details
+    </a>
+
+    <a href="{% url 'admissions:print_challan' %}"
+       class="flex items-center justify-center bg-mcmGold text-gray-900 py-3 rounded-xl font-semibold hover:bg-yellow-400 transition shadow-md">
+      🧾 Print Challan Form
+    </a>
+
+    <a href="{% url 'admissions:upload_fee_slip' %}"
+       class="flex items-center justify-center bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition shadow-md">
+      💰 Upload Fee Slip
+    </a>
+
+    <a href="#"
+       class="flex items-center justify-center bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition shadow-md">
+      📬 Messages / Notifications
+    </a>
+
+    <a href="#"
+       class="flex items-center justify-center bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition shadow-md">
+      ❌ Withdraw Application
+    </a>
+
+  </div>
+
+  <!-- Notifications -->
+  {% if notifications %}
+    <div class="mt-10 bg-gray-50 border border-gray-200 rounded-xl shadow-md p-6">
+      <h3 class="text-lg font-bold text-mcmGreen mb-3">📬 Recent Notifications</h3>
+
+      <ul class="space-y-2 text-sm">
+        {% for note in notifications %}
+          <li class="flex items-start justify-between bg-white p-3 rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition">
+            <div>
+              <p class="font-semibold text-gray-800">{{ note.title }}</p>
+              <p class="text-gray-600">{{ note.message }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ note.created_at|date:"M d, Y h:i A" }}</p>
+            </div>
+
+            {% if not note.is_read %}
+              <span class="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded">New</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

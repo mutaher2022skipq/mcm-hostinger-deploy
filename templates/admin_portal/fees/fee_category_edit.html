@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto p-6">
+
+    <h2 class="text-2xl font-bold text-mcmGreen mb-6">
+        🗂 Edit Category Fees — {{ category.category_name }}
+    </h2>
+
+    <form method="POST" class="bg-white shadow-md rounded-xl p-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+                <label class="font-medium">Normal Fee</label>
+                <input type="number" name="normal_fee" value="{{ category.normal_fee }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+
+            <div>
+                <label class="font-medium">Late Fee</label>
+                <input type="number" name="late_fee" value="{{ category.late_fee }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+
+            <div>
+                <label class="font-medium">Final Fee</label>
+                <input type="number" name="final_fee" value="{{ category.final_fee }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button type="submit"
+                class="bg-mcmGreen text-white px-6 py-2 rounded-lg shadow hover:bg-green-700">
+                Save Category
+            </button>
+
+            <a href="{% url 'admissions:fee_management' %}"
+               class="bg-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

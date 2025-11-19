@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto p-6">
+
+    <h2 class="text-2xl font-bold text-mcmGreen mb-6 flex items-center gap-2">
+        🔧 Edit Fee Configuration — Class {{ config.class_name }}
+    </h2>
+
+    <form method="POST" class="bg-white shadow-md rounded-xl p-6">
+        {% csrf_token %}
+
+        <!-- Deadlines -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+                <label class="font-medium">Normal Deadline</label>
+                <input type="date" name="normal_deadline" value="{{ config.normal_deadline|date:'Y-m-d' }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+
+            <div>
+                <label class="font-medium">Late Deadline</label>
+                <input type="date" name="late_deadline" value="{{ config.late_deadline|date:'Y-m-d' }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+
+            <div>
+                <label class="font-medium">Final Deadline</label>
+                <input type="date" name="final_deadline" value="{{ config.final_deadline|date:'Y-m-d' }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+        </div>
+
+        <!-- Base Fee Levels -->
+        {% if config.class_name == "XI" %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+                <label class="font-medium">Normal Fee (Base Fee)</label>
+                <input type="number" name="base_fee" value="{{ config.base_fee }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+            <div>
+                <label class="font-medium">Double Fee</label>
+                <input type="number" name="double_fee" value="{{ config.double_fee }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+            <div>
+                <label class="font-medium">Triple Fee</label>
+                <input type="number" name="triple_fee" value="{{ config.triple_fee }}"
+                       class="mt-1 w-full border rounded-md p-2" />
+            </div>
+        </div>
+        {% endif %}
+
+        <label class="flex items-center gap-2 mb-6">
+            <input type="checkbox" name="stop_after_final" {% if config.stop_after_final %}checked{% endif %}
+                   class="w-4 h-4" />
+            <span class="font-medium">Stop application submission after final deadline</span>
+        </label>
+
+        <div class="flex gap-4 mt-6">
+            <button type="submit"
+                class="bg-mcmGreen text-white px-6 py-2 rounded-lg shadow hover:bg-green-700">
+                Save Changes
+            </button>
+
+            <a href="{% url 'admissions:fee_management' %}"
+               class="bg-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
