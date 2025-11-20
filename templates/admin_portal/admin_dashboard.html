@@ -178,71 +178,115 @@
 
 
   <!-- Applicants table -->
-  <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-    <table class="min-w-full text-sm">
-      <thead class="bg-mcmGreen text-white">
-        <tr>
-          <th class="py-3 px-3 text-left"><input id="bulk-toggle" type="checkbox"></th>
-          <th class="py-3 px-3 text-left">ID</th>
-          <th class="py-3 px-3 text-left">Name</th>
-          <th class="py-3 px-3 text-left">Father</th>
-          <th class="py-3 px-3 text-left">Category</th>
-          <th class="py-3 px-3 text-left">Status</th>
-          <th class="py-3 px-3 text-left">Payment</th>
-          <th class="py-3 px-3 text-left">Test Center</th>
-          <th class="py-3 px-3 text-left">Roll #</th>
-          <th class="py-3 px-3 text-center">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="applicant-rows" class="bg-white divide-y divide-gray-100">
-        {% for app in applications %}
-        <tr class="hover:bg-gray-50">
-          <td class="py-3 px-3"><input class="bulk-check" type="checkbox" value="{{ app.id }}"></td>
-          <td class="py-3 px-3 font-medium text-gray-900">{{ app.id }}</td>
-          <td class="py-3 px-3 font-medium text-gray-900">{{ app.name }}</td>
-          <td class="py-3 px-3 text-gray-700">{{ app.father_name }}</td>
-          <td class="py-3 px-3 text-gray-700">{{ app.get_category_display|default:"None" }}</td>
+<div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+  <table class="min-w-full text-sm">
+    <thead class="bg-mcmGreen text-white">
+      <tr>
+        <!-- Master Checkbox: REQUIRED for Bulk Actions -->
+        <th class="py-3 px-3 text-left">
+          <input id="bulk-toggle" type="checkbox">
+        </th>
 
-          <!-- Status with color badges -->
-          <td class="py-3 px-3">
-            {% if app.status == 'verified' %}
-              <span class="inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">Verified</span>
-            {% elif app.status == 'rejected' %}
-              <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold">Rejected</span>
-            {% elif app.status == 'submitted' %}
-              <span class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Submitted</span>
-            {% elif app.payment_status == 'under_review' %}
-              <span class="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">Under Review</span>
+        <th class="py-3 px-3 text-left">ID</th>
+        <th class="py-3 px-3 text-left">Name</th>
+        <th class="py-3 px-3 text-left">Father</th>
+        <th class="py-3 px-3 text-left">Category</th>
+
+        <!-- ⭐ NEW SHAHEED COLUMN -->
+        <th class="py-3 px-3 text-left">Shaheed</th>
+
+        <th class="py-3 px-3 text-left">Status</th>
+        <th class="py-3 px-3 text-left">Payment</th>
+        <th class="py-3 px-3 text-left">Test Center</th>
+        <th class="py-3 px-3 text-left">Roll #</th>
+        <th class="py-3 px-3 text-center">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody id="applicant-rows" class="bg-white divide-y divide-gray-100">
+      {% for app in applications %}
+      <tr class="hover:bg-gray-50">
+
+        <!-- Individual checkboxes -->
+        <td class="py-3 px-3">
+          <input class="bulk-check" type="checkbox" value="{{ app.id }}">
+        </td>
+
+        <td class="py-3 px-3 font-medium text-gray-900">{{ app.id }}</td>
+        <td class="py-3 px-3 font-medium text-gray-900">{{ app.name }}</td>
+        <td class="py-3 px-3 text-gray-700">{{ app.father_name }}</td>
+        <td class="py-3 px-3 text-gray-700">{{ app.get_category_display }}</td>
+
+        <!-- ⭐ SHAHEED LOGIC -->
+        <td class="py-3 px-3">
+          {% if app.admin_remarks %}
+            {% if "Shaheed" in app.admin_remarks %}
+              <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                🟥 Shaheed
+              </span>
+            {% elif "In Service Death" in app.admin_remarks %}
+              <span class="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+                🟨 In Service Death
+              </span>
             {% else %}
-              <span class="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-semibold">{{ app.status|title }}</span>
+              —
             {% endif %}
-          </td>
+          {% else %}
+            —
+          {% endif %}
+        </td>
 
-          <td class="py-3 px-3 text-gray-700">{{ app.payment_status|title }}</td>
-          <td class="py-3 px-3 text-gray-700">{{ app.get_test_center_display|default:"—" }}</td>
-          <td class="py-3 px-3 font-semibold text-gray-900">{{ app.roll_number|default:"—" }}</td>
+        <!-- Status -->
+        <td class="py-3 px-3">
+          {% if app.status == 'verified' %}
+            <span class="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">Verified</span>
+          {% elif app.status == 'rejected' %}
+            <span class="px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold">Rejected</span>
+          {% elif app.status == 'submitted' %}
+            <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Submitted</span>
+          {% elif app.payment_status == 'under_review' %}
+            <span class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">Under Review</span>
+          {% else %}
+            <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-semibold">{{ app.status|title }}</span>
+          {% endif %}
+        </td>
 
-          <!-- Actions -->
-          <td class="py-3 px-3 text-center">
-            <div class="flex items-center justify-center gap-2">
-              <button onclick="openChallanModal({{ app.id }})" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold">
-                👁 View
-              </button>
-              <button onclick="confirmAction('{{ app.id }}','verify')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-semibold">
-                ✅ Verify
-              </button>
-              <button onclick="confirmAction('{{ app.id }}','reject')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-semibold">
-                ❌ Reject
-              </button>
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="10" class="text-center text-gray-500 py-6">No applications found.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+        <td class="py-3 px-3 text-gray-700">{{ app.payment_status|title }}</td>
+        <td class="py-3 px-3 text-gray-700">{{ app.get_test_center_display|default:"—" }}</td>
+        <td class="py-3 px-3 font-semibold text-gray-900">{{ app.roll_number|default:"—" }}</td>
+
+        <!-- Actions -->
+        <td class="py-3 px-3 text-center">
+          <div class="flex items-center justify-center gap-2">
+            <button onclick="openChallanModal({{ app.id }})"
+              class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold">
+              👁 View
+            </button>
+
+            <button onclick="confirmAction('{{ app.id }}','verify')"
+              class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-semibold">
+              ✅ Verify
+            </button>
+
+            <button onclick="confirmAction('{{ app.id }}','reject')"
+              class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-semibold">
+              ❌ Reject
+            </button>
+          </div>
+        </td>
+
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="11" class="text-center text-gray-500 py-6">
+          No applications found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
 
   <!-- Bulk Action Bar (Bottom Only) -->
   <div class="mt-6 flex flex-wrap items-center justify-between gap-3">

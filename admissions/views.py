@@ -898,6 +898,10 @@ def admin_applicants_api(request):
             Q(form_b__icontains=q) |
             Q(father_cnic__icontains=q)
         )
+    # 🏷 Category Filter  ⭐ ADD THIS ⭐
+    category = request.GET.get('category', '').strip()
+    if category:
+        qs = qs.filter(category=category)
 
     # 🏫 Test Center Filter
     center = request.GET.get('center', '').strip()
@@ -1050,10 +1054,17 @@ def bulk_applicant_action(request):
 
         # Get absolute base URL (for secure link building)
         base_url = f"{request.scheme}://{request.get_host()}"
+        apps.update(
+        status='verified',
+        payment_status='verified'
+        )
 
         # Trigger Celery task instead of thread
         try:
-            bulk_verify_applications_task.delay(list(apps.values_list('id', flat=True)), base_url)
+            bulk_verify_applications_task.delay(
+                list(apps.values_list('id', flat=True)),
+                f"{request.scheme}://{request.get_host()}"
+            )
         except Exception as e:
             logger.warning("Celery task failed, fallback to threaded worker", exc_info=True)
             threading.Thread(target=verify_worker, args=(list(apps), request.user), daemon=True).start()
@@ -1341,33 +1352,45 @@ def export_applicants_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        'Name', 'Father Name', 'Category', 'Status', 'Payment', 
+        'Name', 'Father Name', 'Category', 'Shaheed Status', 'Status', 'Payment',
         'Test Center', 'Roll Number',
-        'Class Applied',                   # NEW
-        '9th %', '10th %',                 # NEW
-        '9th Marksheet URL',               # NEW
-        '10th Marksheet URL'               # NEW
+        'Class Applied',
+        '9th %', '10th %',
+        '9th Marksheet URL',
+        '10th Marksheet URL'
     ])
 
     for app in queryset:
+
+        # ⭐ Shaheed status logic
+        if app.admin_remarks:
+            remarks = app.admin_remarks.lower()
+            if "shaheed" in remarks:
+                shaheed_status = "Shaheed"
+            elif "in service death" in remarks:
+                shaheed_status = "In Service Death"
+            else:
+                shaheed_status = ""
+        else:
+            shaheed_status = ""
+
         writer.writerow([
             app.name,
             app.father_name,
             app.get_category_display(),
+            shaheed_status,                 # ⭐ NEW COLUMN
             app.status,
             app.payment_status,
             app.get_test_center_display(),
             app.roll_number or '',
-            app.class_name or '',                          # NEW
-            app.percentage_9th or '',                      # NEW
-            app.percentage_10th or '',                     # NEW
-            app.marksheet_9th.url if app.marksheet_9th else '',   # NEW
-            app.marksheet_10th.url if app.marksheet_10th else ''  # NEW
+            app.class_name or '',
+            app.percentage_9th or '',
+            app.percentage_10th or '',
+            app.marksheet_9th.url if app.marksheet_9th else '',
+            app.marksheet_10th.url if app.marksheet_10th else ''
         ])
 
     return response
-
-
 
 @user_passes_test(staff_required)
 def export_applicants_excel(request):
@@ -1376,23 +1399,42 @@ def export_applicants_excel(request):
 
     data = []
     for app in queryset:
+
+        # ⭐ Shaheed status logic
+        if app.admin_remarks:
+            remarks = app.admin_remarks.lower()
+            if "shaheed" in remarks:
+                shaheed_status = "Shaheed"
+            elif "in service death" in remarks:
+                shaheed_status = "In Service Death"
+            else:
+                shaheed_status = ""
+        else:
+            shaheed_status = ""
+
         data.append({
             'Name': app.name,
             'Father Name': app.father_name,
             'Category': app.get_category_display(),
+
+            # ⭐ NEW COLUMN
+            'Shaheed Status': shaheed_status,
+
             'Status': app.status,
             'Payment': app.payment_status,
             'Test Center': app.get_test_center_display(),
             'Roll Number': app.roll_number or '',
-            'Class Applied': app.class_name or '',            # NEW
-            '9th %': app.percentage_9th or '',                # NEW
-            '10th %': app.percentage_10th or '',              # NEW
+            'Class Applied': app.class_name or '',
+
+            '9th %': app.percentage_9th or '',
+            '10th %': app.percentage_10th or '',
+
             '9th Marksheet URL': (
                 app.marksheet_9th.url if app.marksheet_9th else ''
-            ),                                                # NEW
+            ),
             '10th Marksheet URL': (
                 app.marksheet_10th.url if app.marksheet_10th else ''
-            )                                                 # NEW
+            )
         })
 
     df = pd.DataFrame(data)
@@ -1409,31 +1451,67 @@ def export_applicants_excel(request):
 
 
 
+
 def get_filtered_applicants(request):
-    """Helper to apply same filters used in dashboard AJAX filter."""
-    queryset = Application.objects.all()
+    """Unified filtering for dashboard, CSV export, Excel export."""
 
-    category = request.GET.get('category')
-    status = request.GET.get('status')
-    center = request.GET.get('center')
-    class_name = request.GET.get('class_name')  # NEW
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
+    qs = Application.objects.all()
 
+    # 🔍 Search
+    q = request.GET.get('q', '').strip()
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(father_name__icontains=q) |
+            Q(roll_number__icontains=q) |
+            Q(form_b__icontains=q) |
+            Q(father_cnic__icontains=q)
+        )
+
+    # 🏷 Category
+    category = request.GET.get('category', '').strip()
     if category:
-        queryset = queryset.filter(category=category)
-    if status:
-        queryset = queryset.filter(status=status)
-    if center:
-        queryset = queryset.filter(test_center=center)
-    if class_name:
-        queryset = queryset.filter(class_name=class_name)   # NEW FILTER
-    if date_from:
-        queryset = queryset.filter(submission_date__date__gte=date_from)
-    if date_to:
-        queryset = queryset.filter(submission_date__date__lte=date_to)
+        qs = qs.filter(category=category)
 
-    return queryset.order_by('-submission_date')
+    # 📌 Status
+    status = request.GET.get('status', '').strip()
+    if status:
+        qs = qs.filter(status=status)
+
+    # 🏫 Center
+    center = request.GET.get('center', '').strip()
+    if center:
+        qs = qs.filter(test_center=center)
+
+    # 📘 Class (VIII | XI)
+    class_name = request.GET.get('class_name', '').strip()
+    if class_name:
+        qs = qs.filter(class_name=class_name)
+
+    # 📅 Date From/To
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+
+    if date_from:
+        qs = qs.filter(submission_date__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(submission_date__date__lte=date_to)
+
+    # ⭐ NEW — SHAHEED FILTER
+    shaheed_filter = request.GET.get("shaheed", "").strip()
+
+    if shaheed_filter == "shaheed":
+        qs = qs.filter(admin_remarks__icontains="shaheed")
+
+    elif shaheed_filter == "isd":
+        qs = qs.filter(admin_remarks__icontains="in service death")
+
+    elif shaheed_filter == "normal":
+        qs = qs.exclude(admin_remarks__icontains="shaheed") \
+               .exclude(admin_remarks__icontains="in service death")
+
+    return qs.order_by('-submission_date')
+
 
 
  
