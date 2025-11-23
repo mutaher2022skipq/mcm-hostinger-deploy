@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+    <h2 class="text-2xl font-bold text-mcmGreen">📄 View Submitted Application</h2>
+    <a href="{% url 'admissions:dashboard' %}" 
+       class="bg-mcmGreen text-white px-4 py-2 rounded-lg hover:bg-mcmOlive transition shadow">
+       ← Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Application Summary -->
+  <div class="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-8">
+    <h3 class="text-lg font-semibold text-mcmGreen mb-3">Application Summary</h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 text-sm text-gray-700">
+
+      <p><strong>Status:</strong> 
+        {% if application.status == 'verified' %}
+          <span class="text-green-600 font-semibold">✔ Verified</span>
+        {% elif application.status == 'payment_pending' %}
+          <span class="text-yellow-600 font-semibold">⏳ Payment Pending</span>
+        {% elif application.status == 'submitted' %}
+          <span class="text-blue-600 font-semibold">📤 Submitted</span>
+        {% elif application.status == 'rejected' %}
+          <span class="text-red-600 font-semibold">❌ Rejected</span>
+        {% else %}
+          <span class="text-gray-600 font-semibold capitalize">{{ application.status }}</span>
+        {% endif %}
+      </p>
+
+      <p><strong>Submission Date:</strong> {{ application.submission_date|date:"M. j, Y" }}</p>
+      <p><strong>Fee Amount:</strong> Rs {{ application.amount|default:"0" }}</p>
+      <p><strong>Category:</strong> {{ application.get_category_display }}</p>
+
+      <!-- ENTRY FIX -->
+      <p><strong>Entry:</strong> 
+          {% if application.class_name == "XI" %}
+              XI Class Entry-2026
+          {% else %}
+              8th Class Entry-2026
+          {% endif %}
+      </p>
+
+    </div>
+  </div>
+
+  <!-- Application Details -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+    <p><strong>Name:</strong> {{ application.name }}</p>
+    <p><strong>Father Name:</strong> {{ application.father_name }}</p>
+    <p><strong>Mother Name:</strong> {{ application.mother_name }}</p>
+    <p><strong>Date of Birth:</strong> {{ application.dob|date:"M d, Y" }}</p>
+    <p><strong>Guardian:</strong> {{ application.guardian }}</p>
+    <p><strong>Form-B No:</strong> {{ application.form_b }}</p>
+    <p><strong>Father CNIC:</strong> {{ application.father_cnic }}</p>
+    <p><strong>Mother CNIC:</strong> {{ application.mother_cnic }}</p>
+    <p><strong>Domicile:</strong> {{ application.domicile }}</p>
+    <p><strong>Religion:</strong> {{ application.religion }}</p>
+    <p><strong>Father Occupation:</strong> {{ application.father_occupation }}</p>
+
+    <!-- Category with badge -->
+    <p><strong>Category:</strong> 
+      {{ application.get_category_display }}
+      {% if application.admin_remarks %}
+        {% if "Shaheed" in application.admin_remarks %}
+          <span class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded ml-2">🟥 Shaheed</span>
+        {% elif "In Service Death" in application.admin_remarks %}
+          <span class="bg-yellow-100 text-yellow-700 text-xs font-semibold px-2 py-1 rounded ml-2">🟨 In Service Death</span>
+        {% endif %}
+      {% endif %}
+    </p>
+
+    <p><strong>Remarks:</strong> {{ application.admin_remarks|default:"—" }}</p>
+
+    <!-- Army Info -->
+    <p><strong>Army No:</strong> {{ application.army_no|default:"—" }}</p>
+    <p><strong>Rank:</strong> {{ application.rank|default:"—" }}</p>
+    <p><strong>Arm:</strong> {{ application.arm|default:"—" }}</p>
+    <p><strong>Arm Info:</strong> {{ application.arm_info|default:"—" }}</p>
+
+    <!-- Address -->
+    <p><strong>Address:</strong> {{ application.postal_address }}</p>
+
+    <!-- FIXED MOBILE NUMBER -->
+    <p><strong>Mobile No:</strong> 
+        {% if application.mobile_no %}
+            {{ application.mobile_no }}
+        {% elif user.phone %}
+            {{ user.phone }}
+        {% else %}
+            —
+        {% endif %}
+    </p>
+
+    <p><strong>Landline:</strong> {{ application.landline_no|default:"—" }}</p>
+    <p><strong>Test Center:</strong> {{ application.get_test_center_display }}</p>
+  </div>
+
+  <!-- XI Academic Block -->
+  {% if application.class_name == "XI" %}
+  <div class="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-mcmGreen mb-4">📘 Academic Information (Class XI)</h3>
+
+      <p><strong>9th Class Percentage:</strong> {{ application.percentage_9th|default:"—" }}</p>
+      <p><strong>10th Class Percentage:</strong> {{ application.percentage_10th|default:"—" }}</p>
+
+      <p><strong>9th Marksheet:</strong>
+        {% if application.marksheet_9th %}
+            <a href="{{ application.marksheet_9th.url }}" class="text-blue-600 underline">View File</a>
+        {% else %}
+            —
+        {% endif %}
+      </p>
+
+      <p><strong>10th Marksheet:</strong>
+        {% if application.marksheet_10th %}
+            <a href="{{ application.marksheet_10th.url }}" class="text-blue-600 underline">View File</a>
+        {% else %}
+            —
+        {% endif %}
+      </p>
+  </div>
+  {% endif %}
+
+  <!-- Applicant Photo -->
+  {% if application.photo %}
+  <div class="mt-6 text-center">
+    <p class="text-gray-600 font-semibold mb-2">Applicant Photo:</p>
+    <img src="{{ application.photo.url }}" class="mx-auto rounded-lg border border-gray-300 w-32 h-32 object-cover">
+  </div>
+  {% endif %}
+
+  <!-- Print Challan -->
+  <div class="mt-8 text-center">
+    <a href="{% url 'admissions:print_challan' %}" 
+       class="bg-mcmGold text-gray-900 px-6 py-2 rounded-lg hover:bg-yellow-400 transition shadow font-semibold">
+       🧾 Print Challan
+    </a>
+  </div>
+
+</div>
+
+{% endblock %}

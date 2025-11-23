@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="max-w-6xl mx-auto p-8 bg-white rounded-2xl shadow-lg">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-mcmGreen">📊 Admission Analytics Dashboard</h1>
+    <a href="{% url 'admissions:admin_dashboard' %}"
+       class="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2.5 rounded-lg font-semibold shadow transition">
+       ← Back to Dashboard
+    </a>
+    <a href="{% url 'admissions:export_analytics_pdf' %}"
+   class="bg-mcmGold hover:bg-yellow-400 text-gray-900 px-5 py-2.5 rounded-lg font-semibold shadow transition">
+   📄 Export Analytics Report
+</a>
+
+  </div>
+
+  <p class="text-gray-600 mb-6">
+    Visual insights of admission trends, applicant categories, verification status, and daily submissions.
+  </p>
+
+  <!-- Analytics Overview -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Category Chart -->
+    <div class="bg-gray-50 rounded-lg shadow p-4 border border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">Applicants by Category</h3>
+      <canvas id="categoryChart" height="220"></canvas>
+    </div>
+
+    <!-- Status Chart -->
+    <div class="bg-gray-50 rounded-lg shadow p-4 border border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">Applicants by Status</h3>
+      <canvas id="statusChart" height="220"></canvas>
+    </div>
+
+    <!-- Center Chart -->
+    <div class="bg-gray-50 rounded-lg shadow p-4 border border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">Applicants by Test Center</h3>
+      <canvas id="centerChart" height="220"></canvas>
+    </div>
+
+    <!-- Daily Submissions -->
+    <div class="bg-gray-50 rounded-lg shadow p-4 border border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">Daily Submissions</h3>
+      <canvas id="dailyChart" height="220"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const apiUrl = "{% url 'admissions:analytics_data' %}";
+
+  // 🧭 Chart IDs for reference
+  const chartIds = ["categoryChart", "statusChart", "centerChart", "dailyChart"];
+
+  // 🌀 Loading animation setup
+  chartIds.forEach(id => {
+    const ctx = document.getElementById(id).getContext("2d");
+    ctx.font = "16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#9ca3af";
+    ctx.fillText("⏳ Loading...", ctx.canvas.width / 2, ctx.canvas.height / 2);
+  });
+
+  // Helper to show "no data" message
+  function showNoData(canvasId, msg="No data available") {
+    const ctx = document.getElementById(canvasId).getContext("2d");
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.font = "16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#9ca3af";
+    ctx.fillText(`⚠ ${msg}`, ctx.canvas.width / 2, ctx.canvas.height / 2);
+  }
+
+  // Fetch the analytics data
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(res => {
+      if (!res.success) throw new Error(res.error || "Error fetching analytics");
+      const data = res.data;
+
+      // Reusable colors
+      const colors = ["#22c55e","#3b82f6","#f59e0b","#ef4444","#8b5cf6","#0ea5e9","#84cc16"];
+
+      // Helper to render chart with fallback
+      const renderChart = (id, type, labels, values, label, colorSet) => {
+        if (!values.length || values.reduce((a,b)=>a+b,0) === 0) {
+          showNoData(id);
+          return;
+        }
+        new Chart(document.getElementById(id), {
+          type: type,
+          data: {
+            labels: labels,
+            datasets: [{
+              label: label || "",
+              data: values,
+              backgroundColor: colorSet,
+              borderColor: colorSet,
+              fill: type === "line" ? false : true,
+              tension: 0.3,
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: {
+                backgroundColor: "#1f2937",
+                titleColor: "#fff",
+                bodyColor: "#fff",
+                cornerRadius: 6
+              }
+            },
+            scales: type === "bar" || type === "line" ? {
+              y: { beginAtZero: true, grid: { color: "#f3f4f6" } },
+              x: { grid: { display: false } }
+            } : {}
+          }
+        });
+      };
+
+      // Render charts
+      renderChart("categoryChart", "pie",
+        data.by_category.map(c => c.category || "Unknown"),
+        data.by_category.map(c => c.count),
+        "Applicants by Category",
+        colors
+      );
+
+      renderChart("statusChart", "doughnut",
+        data.by_status.map(s => s.status || "Unknown"),
+        data.by_status.map(s => s.count),
+        "Applicants by Status",
+        colors
+      );
+
+      renderChart("centerChart", "bar",
+        data.by_center.map(c => c.test_center || "Unknown"),
+        data.by_center.map(c => c.count),
+        "Applicants by Test Center",
+        ["#3b82f6"]
+      );
+
+      renderChart("dailyChart", "line",
+        data.daily_submissions.map(d => d.date),
+        data.daily_submissions.map(d => d.count),
+        "Daily Submissions",
+        ["#22c55e"]
+      );
+    })
+    .catch(err => {
+      console.error("Analytics error:", err);
+      chartIds.forEach(id => showNoData(id, "Unable to load data"));
+    });
+});
+</script>
+
+
+{% endblock %}

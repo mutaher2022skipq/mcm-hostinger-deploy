@@ -1,0 +1,589 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- 🌿 Main Dashboard Container (extra wide, perfectly balanced, no scroll) -->
+<div
+  class="w-[100%] sm:w-[100%] md:w-[100%] lg:w-[100%] xl:w-[100%] 2xl:w-[100%]
+            max-w-[2400px] mx-auto p-12 bg-white rounded-2xl shadow-lg border border-gray-200 transition-all duration-300">
+
+
+
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800">📊 Admin Dashboard</h1>
+      <p class="text-gray-500 text-sm mt-1">Manage admissions, fees, and applicants efficiently.</p>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+      <a href="{% url 'admissions:admin_analytics' %}"
+        class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition">
+        📈 Analytics
+      </a>
+      <a href="{% url 'admissions:broadcast_messages' %}"
+        class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition">
+        📢 Broadcast
+      </a>
+      <a href="{% url 'admissions:fee_management' %}"
+        class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition">
+        🪙 Fees
+      </a>
+      <a href="{% url 'admissions:form_field_control' %}"
+        class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition">
+        🛠️ Fields
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <!-- Total -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total</p>
+        <p class="text-2xl font-bold text-gray-900 mt-1">{{ total }}</p>
+      </div>
+      <div class="p-3 bg-blue-50 rounded-full text-blue-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+          </path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Verified -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Verified</p>
+        <p class="text-2xl font-bold text-green-600 mt-1">{{ verified }}</p>
+      </div>
+      <div class="p-3 bg-green-50 rounded-full text-green-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Under Review -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Review</p>
+        <p class="text-2xl font-bold text-yellow-600 mt-1">{{ under_review }}</p>
+      </div>
+      <div class="p-3 bg-yellow-50 rounded-full text-yellow-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Pending -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Pending</p>
+        <p class="text-2xl font-bold text-gray-600 mt-1">{{ pending }}</p>
+      </div>
+      <div class="p-3 bg-gray-100 rounded-full text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Rejected -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Rejected</p>
+        <p class="text-2xl font-bold text-red-600 mt-1">{{ rejected }}</p>
+      </div>
+      <div class="p-3 bg-red-50 rounded-full text-red-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admission Session Controls -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    {% for session in sessions %}
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-bold text-gray-800">{{ session.get_class_name_display }}</h3>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-sm text-gray-500">Status:</span>
+          {% if session.is_open %}
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Open
+          </span>
+          {% else %}
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            Closed
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'admissions:toggle_admission' session.id %}">
+        {% csrf_token %}
+        <button type="submit"
+          class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-mcmGreen focus:ring-offset-2 {% if session.is_open %}bg-green-500{% else %}bg-gray-200{% endif %}"
+          role="switch" aria-checked="{{ session.is_open }}">
+          <span aria-hidden="true"
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {% if session.is_open %}translate-x-5{% else %}translate-x-0{% endif %}"></span>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="bg-white border border-gray-200 rounded-xl p-5 mb-8 shadow-sm">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+
+      <!-- Search -->
+      <div class="col-span-1 sm:col-span-2 lg:col-span-2">
+        <label class="block text-xs font-medium text-gray-500 mb-1">Search</label>
+        <input id="admin-search" type="text" placeholder="Name, Father, Roll #, CNIC..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-mcmGreen focus:border-mcmGreen">
+      </div>
+
+      <!-- Class -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Class</label>
+        <select id="filter-class" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="">All Classes</option>
+          <option value="VIII">Class VIII</option>
+          <option value="XI">Class XI</option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+        <select id="filter-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="">All Status</option>
+          <option value="draft">Draft</option>
+          <option value="payment_pending">Payment Pending</option>
+          <option value="submitted">Submitted</option>
+          <option value="verified">Verified</option>
+          <option value="rejected">Rejected</option>
+          <option value="under_review">Under Review</option>
+        </select>
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+        <select id="filter-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="">All Categories</option>
+          {% for value, label in categories %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Center -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Center</label>
+        <select id="filter-center" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="">All Centers</option>
+          {% for code, desc in test_centers %}
+          <option value="{{ code }}">{{ desc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Date From -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Date From</label>
+        <input id="date-from" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+
+      <!-- Date To -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Date To</label>
+        <input id="date-to" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+
+      <!-- Actions -->
+      <div
+        class="col-span-1 sm:col-span-2 lg:col-span-4 xl:col-span-6 flex flex-wrap gap-3 mt-2 pt-4 border-t border-gray-100">
+        <button id="btn-filter"
+          class="px-5 py-2 bg-mcmGreen text-white rounded-lg text-sm font-medium shadow-sm hover:bg-mcmOlive transition flex items-center gap-2">
+          🔍 Apply Filters
+        </button>
+
+        <div class="flex-grow"></div>
+
+        <button onclick="handleExport('{% url 'admissions:export_applicants_csv' %}?'+getFilters())"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 transition flex items-center gap-2">
+          📤 CSV
+        </button>
+        <button onclick="handleExport('{% url 'admissions:export_applicants_excel' %}?'+getFilters())"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium shadow-sm hover:bg-green-700 transition flex items-center gap-2">
+          📊 Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Applicants table -->
+  <div class="overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white">
+    <div class="overflow-x-auto max-h-[600px]">
+      <table class="min-w-full text-sm relative">
+        <thead class="bg-mcmGreen text-white sticky top-0 z-10 shadow-sm">
+          <tr>
+            <!-- Master Checkbox -->
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">
+              <input id="bulk-toggle" type="checkbox" class="rounded border-gray-300 text-mcmGreen focus:ring-mcmGreen">
+            </th>
+
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">ID</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Name</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Father</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Category</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Shaheed</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Status</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Payment</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Center</th>
+            <th class="py-3 px-4 text-left font-semibold border-b border-mcmOlive bg-mcmGreen">Roll #</th>
+            <th class="py-3 px-4 text-center font-semibold border-b border-mcmOlive bg-mcmGreen">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody id="applicant-rows" class="divide-y divide-gray-100">
+          {% for app in applications %}
+          <tr class="hover:bg-gray-50 transition-colors">
+
+            <!-- Checkbox -->
+            <td class="py-3 px-4">
+              <input class="bulk-check rounded border-gray-300 text-mcmGreen focus:ring-mcmGreen" type="checkbox"
+                value="{{ app.id }}">
+            </td>
+
+            <td class="py-3 px-4 font-medium text-gray-900">#{{ app.id }}</td>
+            <td class="py-3 px-4 font-medium text-gray-900">{{ app.name }}</td>
+            <td class="py-3 px-4 text-gray-600">{{ app.father_name }}</td>
+            <td class="py-3 px-4 text-gray-600 text-xs">{{ app.get_category_display }}</td>
+
+            <!-- Shaheed -->
+            <td class="py-3 px-4">
+              {% if app.admin_remarks %}
+              {% if "Shaheed" in app.admin_remarks %}
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                Shaheed
+              </span>
+              {% elif "In Service Death" in app.admin_remarks %}
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-100">
+                ISD
+              </span>
+              {% else %}
+              <span class="text-gray-400">—</span>
+              {% endif %}
+              {% else %}
+              <span class="text-gray-400">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Status -->
+            <td class="py-3 px-4">
+              {% if app.status == 'verified' %}
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Verified
+              </span>
+              {% elif app.status == 'rejected' %}
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                Rejected
+              </span>
+              {% elif app.status == 'submitted' %}
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Submitted
+              </span>
+              {% elif app.payment_status == 'under_review' %}
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                Review
+              </span>
+              {% else %}
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {{ app.status|title }}
+              </span>
+              {% endif %}
+            </td>
+
+            <td class="py-3 px-4 text-gray-600 text-xs">{{ app.payment_status|title }}</td>
+            <td class="py-3 px-4 text-gray-600 text-xs">{{ app.get_test_center_display|default:"—" }}</td>
+            <td class="py-3 px-4 font-mono text-xs font-semibold text-gray-700">{{ app.roll_number|default:"—" }}</td>
+
+            <!-- Actions -->
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="openChallanModal({{ app.id }})"
+                  class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                  title="View Details">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                    </path>
+                  </svg>
+                </button>
+
+                <button onclick="confirmAction('{{ app.id }}','verify')"
+                  class="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition" title="Verify">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </button>
+
+                <button onclick="confirmAction('{{ app.id }}','reject')"
+                  class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition" title="Reject">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center text-gray-500 py-12">
+              <div class="flex flex-col items-center justify-center">
+                <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p>No applications found matching criteria.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- Bulk Action Bar (Bottom Only) -->
+  <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <label class="text-sm text-gray-600">Bulk Actions:</label>
+      <button id="bulk-verify" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Bulk Verify</button>
+      <button id="bulk-reject" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Bulk Reject</button>
+      <select id="bulk-assign-center"
+        class="px-3 py-2 border border-gray-300 rounded text-sm bg-white focus:ring-2 focus:ring-mcmGreen">
+        <option value="">Assign Center...</option>
+        {% for code, desc in test_centers %}
+        <option value="{{ code }}">{{ desc }}</option>
+        {% endfor %}
+      </select>
+      <button id="bulk-assign-btn" class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900">Assign</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div id="challanModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+  <div id="challanContent"
+    class="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 overflow-y-auto max-h-[90vh] border border-gray-200">
+    <!-- Content loaded dynamically -->
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container" class="fixed top-5 right-5 z-[9999] space-y-3"></div>
+
+{# Security: CSRF via cookie reader (works even when JS fetch posts) #}
+<script>
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+  const CSRF_TOKEN = getCookie('csrftoken');
+</script>
+
+<!-- JS: AJAX helpers, confirmAction, bulk handlers -->
+<script>
+  // Open challan modal (detail)
+  function openChallanModal(appId) {
+    fetch(`/admissions/challan-details/${appId}/`)
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('challanContent').innerHTML = html;
+        document.getElementById('challanModal').classList.remove('hidden');
+      })
+      .catch(error => console.error('Modal load error:', error));
+  }
+  function closeModal() {
+    document.getElementById('challanModal').classList.add('hidden');
+  }
+
+  // Toast helper
+  function showToast(message, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `px-4 py-2 rounded-lg text-white text-sm ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+    t.textContent = message;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+  // ✅ Export Toast Helper
+  function handleExport(url) {
+    showToast('📤 Export started… Your download will begin shortly.', 'success');
+    // Delay slightly for better UX feel
+    setTimeout(() => {
+      window.location.href = url;
+    }, 800);
+  }
+
+
+  // Verify / Reject individual (AJAX GET)
+  function confirmAction(appId, action) {
+    if (!confirm(`Are you sure you want to ${action} this challan?`)) return;
+    fetch(`/admissions/verify-fees/${appId}/${action}/`, {
+      method: 'GET',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showToast(`Challan ${action}ed.`);
+          setTimeout(() => location.reload(), 900);
+        } else {
+          showToast('Action failed.', 'error');
+        }
+      })
+      .catch(e => {
+        console.error(e);
+        showToast('Network error', 'error');
+      });
+  }
+
+  // Bulk helpers
+  document.getElementById('bulk-toggle').addEventListener('change', function (e) {
+    document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = e.target.checked);
+  });
+
+  function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.bulk-check:checked')).map(i => i.value);
+  }
+
+  function postBulk(action, extra = {}) {
+    const ids = getSelectedIds();
+    if (ids.length === 0) { alert('Select at least one applicant'); return; }
+
+    const payload = new URLSearchParams();
+    payload.append('action', action);
+    ids.forEach(id => payload.append('ids[]', id));
+    for (const k in extra) payload.append(k, extra[k]);
+
+    fetch("{% url 'admissions:bulk_applicant_action' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      body: payload.toString()
+    })
+      .then(r => r.json())
+      .then(resp => {
+        if (resp.success) {
+          showToast('Bulk action successful');
+          setTimeout(() => location.reload(), 900);
+        } else {
+          alert('Bulk action failed: ' + (resp.error || 'unknown'));
+        }
+      })
+      .catch(e => {
+        console.error(e);
+        alert('Network error');
+      });
+  }
+
+  document.getElementById('bulk-verify').addEventListener('click', () => postBulk('verify'));
+  document.getElementById('bulk-reject').addEventListener('click', () => postBulk('reject'));
+  document.getElementById('bulk-assign-btn').addEventListener('click', () => {
+    const center = document.getElementById('bulk-assign-center').value;
+    if (!center) { alert('Select a center'); return; }
+    postBulk('assign_center', { 'assign_center': center });
+  });
+
+  // Filters + AJAX fetch (uses admin_applicants_api)
+  (function () {
+    const apiUrl = "{% url 'admissions:admin_applicants_api' %}";
+    let debounce = null;
+
+    window.getFilters = function () {
+      return new URLSearchParams({
+        q: document.getElementById('admin-search').value,
+        category: document.getElementById('filter-category').value,
+        center: document.getElementById('filter-center').value,
+        status: document.getElementById('filter-status').value,
+        class_name: document.getElementById('filter-class').value,   // 🆕 NEW
+        date_from: document.getElementById('date-from').value,
+        date_to: document.getElementById('date-to').value
+      }).toString();
+    };
+
+    function fetchRows(page = 1) {
+      const params = window.getFilters();
+      fetch(apiUrl + `?page=${page}&` + params, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById('applicant-rows').innerHTML = html;
+        })
+        .catch(e => console.error('Fetch rows error:', e));
+    }
+
+    // Search debounce
+    document.getElementById('admin-search')
+      .addEventListener('input', function () {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => fetchRows(1), 450);
+      });
+
+    // Apply filters
+    document.getElementById('btn-filter')
+      .addEventListener('click', function (e) {
+        e.preventDefault();
+        fetchRows(1);
+      });
+
+    // Pagination clicks
+    document.addEventListener("click", function (e) {
+      if (e.target.classList.contains("pagination-btn")) {
+        const page = e.target.dataset.page;
+        fetchRows(page);   // FIXED
+      }
+    });
+
+    // 🚀 Load page 1 on first load
+    fetchRows();
+  })();
+
+</script>
+
+
+{% endblock %}

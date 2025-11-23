@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCM Admission System</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mcmGreen: '#0b3d0b',
+            mcmOlive: '#3d5c3d',
+            mcmGold: '#d4af37',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Global Form Styling -->
+  <style>
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="date"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      margin-top: 0.25rem;
+      transition: all 0.2s ease;
+      background-color: #fff;
+      color: #111827;
+    }
+
+    input:hover,
+    select:hover,
+    textarea:hover { border-color: #9ca3af; }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #064E3B;
+      box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.2);
+    }
+
+    label { font-weight: 600; color: #374151; margin-bottom: 0.25rem; display: inline-block; }
+
+    /* Inline field error text (used across templates) */
+    .field-error { color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; }
+
+    /* Outline for invalid inputs (JS toggles this) */
+    .input-error {
+      border-color: #dc2626 !important;
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.12) !important;
+    }
+
+    body { transition: background-color 0.3s ease, color 0.3s ease; }
+
+    @keyframes slideInRight {
+      0% { transform: translateX(100%); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    .alert-slide-in { animation: slideInRight 0.4s ease-out; }
+
+    /* make persistent alerts slightly more visible */
+    .persist-alert { opacity: 1; }
+    .fade-alert { opacity: 1; } /* initial; will be auto-hidden by script for non-errors */
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="bg-white sticky top-0 z-50 shadow-lg border-b border-gray-100">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <!-- Logo -->
+      <a href="/" class="text-mcmGreen font-bold text-xl tracking-wide hover:text-mcmOlive transition">
+        🎓 MCM Admission
+      </a>
+
+      <!-- Right side -->
+      <div class="flex items-center space-x-6 text-sm font-medium relative">
+        {% if user.is_authenticated %}
+          <a href="{% url 'admissions:dashboard' %}" class="text-mcmGreen hover:text-mcmOlive transition">Dashboard</a>
+
+          <!-- Notification bell -->
+          <div class="relative">
+            <button id="notif-btn" class="relative focus:outline-none" aria-label="Notifications">
+              <span class="text-gray-700 hover:text-mcmGreen text-xl">🔔</span>
+              {% if unread_count|default:0 %}
+                <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {{ unread_count }}
+                </span>
+              {% endif %}
+            </button>
+
+            <!-- Dropdown -->
+            <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+              <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-semibold text-mcmGreen text-sm">Recent Notifications</h3>
+                <button id="close-notif" class="text-xs text-gray-500 hover:text-red-600">✕</button>
+              </div>
+
+              {% if notifications %}
+                <ul class="max-h-80 overflow-y-auto">
+                  {% for note in notifications %}
+                    <li class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50">
+                      <p class="text-sm font-semibold text-gray-800">{{ note.title }}</p>
+                      <p class="text-xs text-gray-600 truncate">{{ note.message }}</p>
+                      <p class="text-[10px] text-gray-400 mt-1">{{ note.created_at|date:"M d, Y h:i A" }}</p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <div class="p-4 text-center text-gray-500 text-sm">No new notifications.</div>
+              {% endif %}
+            </div>
+          </div>
+
+      
+        <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit"
+              style="background:none; border:none; color:#dc2626; cursor:pointer;"
+              class="text-red-600 hover:text-red-800 transition">
+              Logout
+          </button>
+      </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="text-mcmGreen hover:text-mcmOlive transition">Login</a>
+          <a href="{% url 'accounts:signup_step1' %}" class="bg-mcmGold text-white px-3 py-1.5 rounded-lg hover:bg-mcmOlive transition shadow">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Notification dropdown toggle + mark as read -->
+  <script>
+    // Helper to read csrftoken cookie (Django default)
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const notifBtn = document.getElementById("notif-btn");
+      const dropdown = document.getElementById("notif-dropdown");
+      const closeBtn = document.getElementById("close-notif");
+
+      if (!notifBtn || !dropdown) return;
+
+      notifBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle("hidden");
+
+        // When opening, mark all as read (call mark_all endpoint)
+        if (!dropdown.classList.contains("hidden")) {
+          const csrftoken = getCookie('csrftoken');
+          fetch("{% url 'notifications:mark_all_as_read' %}", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrftoken,
+              "X-Requested-With": "XMLHttpRequest"
+            },
+            body: JSON.stringify({}) // body optional
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // remove visual badge
+              const b = notifBtn.querySelector("span.absolute");
+              if (b) b.remove();
+            }
+          })
+          .catch(err => console.error("Notification mark error:", err));
+        }
+      });
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dropdown.classList.add("hidden");
+        });
+      }
+
+      document.addEventListener("click", (e) => {
+        if (!dropdown.contains(e.target) && !notifBtn.contains(e.target)) {
+          dropdown.classList.add("hidden");
+        }
+      });
+    });
+  </script>
+
+  <!-- Django Message Alerts -->
+  {% if messages %}
+  <div id="alert-container" class="fixed top-16 right-4 space-y-3 z-50" aria-live="polite">
+    {% for message in messages %}
+      {% if message.tags == "success" %}
+        <div role="alert" class="alert-slide-in bg-green-100 border-l-4 border-green-600 text-green-800 p-4 rounded-lg shadow-md fade-alert">✅ {{ message }}</div>
+      {% elif message.tags == "error" %}
+        <!-- error messages persist until user addresses them -->
+        <div role="alert" class="alert-slide-in bg-red-100 border-l-4 border-red-600 text-red-800 p-4 rounded-lg shadow-md persist-alert">❌ {{ message }}</div>
+      {% elif message.tags == "warning" %}
+        <div role="alert" class="alert-slide-in bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-lg shadow-md fade-alert">⚠️ {{ message }}</div>
+      {% else %}
+        <div role="alert" class="alert-slide-in bg-blue-100 border-l-4 border-blue-500 text-blue-800 p-4 rounded-lg shadow-md fade-alert">ℹ️ {{ message }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Main Page Content -->
+  <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-4 mt-6">
+    <div class="container mx-auto text-center text-gray-500 text-sm">
+      © {{ now|date:"Y" }} Military College Murree — Admission System
+    </div>
+  </footer>
+
+  <!-- Auto-hide non-error Alerts -->
+  <script>
+    // Auto-hide non-error alerts (those with class 'fade-alert'). Keep error alerts (persist-alert) visible.
+    setTimeout(() => {
+      document.querySelectorAll("#alert-container .fade-alert").forEach(el => {
+        el.style.transition = "opacity 0.8s ease, transform 0.8s ease";
+        el.style.opacity = "0";
+        el.style.transform = "translateX(50%)";
+        setTimeout(() => el.remove(), 800);
+      });
+    }, 3500);
+  </script>
+
+  <!-- Scroll to / focus first error and mark inputs with red outline -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      // 1) Find global persistent alert first
+      const persistent = document.querySelector('#alert-container .persist-alert');
+      if (persistent) {
+        persistent.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // 2) Find first field-level error paragraph (we expect class "field-error" or text-red-600)
+      const fieldErrorEl = document.querySelector('.field-error, .text-red-600');
+      if (!fieldErrorEl) return;
+
+      // Try to find the nearest wrapper and input
+      let wrapper = fieldErrorEl.closest('[id^="field-wrapper-"]') || fieldErrorEl.parentElement;
+      let inputEl = null;
+      if (wrapper) inputEl = wrapper.querySelector('input, select, textarea');
+
+      // fallback: previous sibling
+      if (!inputEl) {
+        const prev = fieldErrorEl.previousElementSibling;
+        if (prev && ['INPUT','SELECT','TEXTAREA'].includes(prev.tagName)) inputEl = prev;
+      }
+
+      if (inputEl) {
+        inputEl.classList.add('input-error');
+        inputEl.focus({ preventScroll: false });
+        inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        // last resort: focus the error paragraph
+        fieldErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // add input-error to any input in wrappers that contain field-error (visual)
+      document.querySelectorAll('[id^="field-wrapper-"]').forEach(wrapper => {
+        const err = wrapper.querySelector('.field-error, .text-red-600');
+        if (err) {
+          const inp = wrapper.querySelector('input, select, textarea');
+          if (inp) inp.classList.add('input-error');
+        }
+      });
+    } catch (e) {
+      // non-fatal: do nothing if script errors
+      console.error("Error-focus script:", e);
+    }
+  });
+  </script>
+
+</body>
+</html>

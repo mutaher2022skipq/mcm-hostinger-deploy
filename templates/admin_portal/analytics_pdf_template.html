@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>MCM Admission Analytics Report</title>
+  <style>
+    /* ======== GLOBAL STYLES ======== */
+    body {
+      font-family: "Arial", sans-serif;
+      margin: 40px;
+      background-color: #fff;
+      color: #222;
+    }
+
+    h1,
+    h2 {
+      color: #064e3b;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 25px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      font-weight: bold;
+    }
+
+    /* ======== HEADER ======== */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #064e3b;
+      padding-bottom: 10px;
+      margin-bottom: 30px;
+    }
+
+    .header img {
+      height: 70px;
+    }
+
+    .header-title {
+      flex: 1;
+      text-align: center;
+    }
+
+    .header-title h1 {
+      color: #064e3b;
+      font-size: 26px;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .timestamp {
+      text-align: right;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    /* ======== SUMMARY BOXES ======== */
+    .summary-boxes {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .box {
+      flex: 1;
+      background: #f1f5f9;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #d1d5db;
+    }
+
+    .box strong {
+      display: block;
+      color: #064e3b;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    /* ======== FOOTER ======== */
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+      border-top: 2px solid #064e3b;
+      margin-top: 40px;
+      padding-top: 10px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ======== HEADER ======== -->
+  <div class="header">
+    <img src="{{ logo_url }}" alt="MCM Logo">
+
+    <div class="header-title">
+      <h1>Military College Murree<br>Admission Analytics Report</h1>
+    </div>
+  </div>
+
+  <div class="timestamp">
+    Generated on: {{ timestamp|date:"d M Y, h:i A" }}
+  </div>
+
+  <!-- ======== SUMMARY BOXES ======== -->
+  <div class="summary-boxes">
+    <div class="box"><strong>Total Applicants</strong>{{ total }}</div>
+    <div class="box"><strong>Verified</strong>{{ verified }}</div>
+    <div class="box"><strong>Under Review</strong>{{ under_review }}</div>
+    <div class="box"><strong>Pending</strong>{{ pending }}</div>
+    <div class="box"><strong>Rejected</strong>{{ rejected }}</div>
+  </div>
+
+  <!-- ======== TABLES ======== -->
+  <h2>Applicants by Category</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in by_category %}
+      <tr>
+        <td>{{ row.category|default:"—" }}</td>
+        <td>{{ row.count }}</td>
+      </tr>
+      {% empty %}<tr>
+        <td colspan="2">No data</td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Applicants by Status</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in by_status %}
+      <tr>
+        <td>{{ row.status|default:"—" }}</td>
+        <td>{{ row.count }}</td>
+      </tr>
+      {% empty %}<tr>
+        <td colspan="2">No data</td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Applicants by Test Center</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Test Center</th>
+        <th>Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in by_center %}
+      <tr>
+        <td>{{ row.test_center|default:"—" }}</td>
+        <td>{{ row.count }}</td>
+      </tr>
+      {% empty %}<tr>
+        <td colspan="2">No data</td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Daily Submissions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Submissions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in daily_submissions %}
+      <tr>
+        <td>{{ row.date }}</td>
+        <td>{{ row.count }}</td>
+      </tr>
+      {% empty %}<tr>
+        <td colspan="2">No submissions</td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ======== FOOTER ======== -->
+  <div class="footer">
+    <strong>Military College Murree – Admission Office</strong><br>
+    📧 mcm.admission.portal@gmail.com | ☎ 051-3752010<br>
+    ⏰ Office Hours: 08:00 AM – 02:00 PM (Mon–Fri)
+  </div>
+
+</body>
+
+</html>

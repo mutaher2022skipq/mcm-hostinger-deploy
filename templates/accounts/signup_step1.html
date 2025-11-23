@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-mcmGreen to-gray-900 px-4 py-8">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-[1.01]">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <img src="/static/images/logo.png" alt="MCM Logo" class="mx-auto w-20 mb-4 drop-shadow-md">
+      <h1 class="text-2xl font-bold text-mcmGreen">Cadet Registration</h1>
+      <p class="text-gray-500 text-sm mt-1">Step 1 — Select Class & Date of Birth</p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="text-sm font-semibold text-gray-700">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <div class="flex items-center mt-1 bg-red-50 border border-red-300 text-red-700 text-sm py-1.5 px-2 rounded-md">
+              <span class="mr-1.5">❗</span>
+              <span>{{ field.errors|striptags }}</span>
+          </div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+
+      <button type="submit"
+        class="w-full bg-mcmGreen hover:bg-mcmOlive text-white font-semibold py-2 rounded-lg transition shadow-md">
+        Next Step →
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="w-[90%] mx-auto p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
+
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-mcmGreen flex items-center gap-2">
+      📢 Broadcast Messages
+    </h1>
+    <div class="flex gap-3">
+      <button id="openModalBtn"
+              class="bg-mcmGold hover:bg-yellow-400 text-gray-900 px-5 py-2.5 rounded-lg font-semibold shadow transition">
+        ➕ Add New Template
+      </button>
+      <a href="{% url 'admissions:admin_dashboard' %}"
+         class="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2.5 rounded-lg shadow">
+         ← Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  {% if sent %}
+  <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg mb-5">
+    ✅ Broadcast started successfully — messages are being sent in background.
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Template Selection -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-2">Select Message Template</label>
+        <select id="templateSelect" name="template_id" required
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-mcmGreen">
+          <option value="">— Select Template —</option>
+          {% for t in templates %}
+          <option value="{{ t.id }}">{{ t.title }}{% if t.category %} ({{ t.category }}){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Target Audience -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-2">Target Audience</label>
+        <select id="targetSelect" name="target" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-mcmGreen">
+          <option value="all">All Applicants</option>
+
+          {# Application categories (mirror of Application.CATEGORY_CHOICES) #}
+          <option value="offr_serving">Offrs (Serving)</option>
+          <option value="offr_retired">Offrs (Retired)</option>
+          <option value="jcos_serving">JCOs/Sldrs (Serving)</option>
+          <option value="jcos_retired">JCOs/Sldrs (Retired)</option>
+          <option value="caf">CAF (FC KPK / Punjab Ranger)</option>
+          <option value="civilian">Civilians</option>
+          <option value="fata">FATA</option>
+          <option value="balochistan">BALOCHISTAN</option>
+          <option value="gilgit">Gilgit Baltistan</option>
+          <option value="ajk">AJ&K</option>
+          <option value="navy_airforce">Personnel of Navy / Airforce</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="flex items-center gap-6 mt-6">
+      <label class="flex items-center gap-2">
+        <input type="checkbox" name="send_email" class="w-4 h-4 text-mcmGreen border-gray-300 rounded">
+        <span class="text-gray-700">Send Email</span>
+      </label>
+
+      <label class="flex items-center gap-2">
+        <input type="checkbox" name="send_inapp" checked class="w-4 h-4 text-mcmGreen border-gray-300 rounded">
+        <span class="text-gray-700">Send In-App Notification</span>
+      </label>
+    </div>
+
+    <div class="flex justify-end mt-8 items-center gap-3">
+      <!-- Preview button opens a preview page in a new tab -->
+      <button type="button" id="previewBtn"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-semibold shadow">
+        👁 Preview Email
+      </button>
+
+      <button type="submit"
+              class="bg-mcmGreen hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow">
+        🚀 Send Broadcast
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal for Adding New Template -->
+<div id="templateModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+  <div class="bg-white w-[95%] md:w-[600px] p-6 rounded-xl shadow-2xl relative">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">📝 Create New Message Template</h2>
+    <form id="templateForm">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="block font-semibold mb-1">Title</label>
+        <input type="text" name="title" class="w-full border rounded-lg px-3 py-2" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="block font-semibold mb-1">Category</label>
+        <select name="category" class="w-full border rounded-lg px-3 py-2">
+          <option value="">General</option>
+          <option value="Verification">Verification</option>
+          <option value="Rejection">Rejection</option>
+          <option value="Exam">Exam</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="block font-semibold mb-1">Subject</label>
+        <input type="text" name="subject" class="w-full border rounded-lg px-3 py-2">
+      </div>
+
+      <div class="mb-3">
+        <label class="block font-semibold mb-1">Body</label>
+        <textarea name="body" rows="5" class="w-full border rounded-lg px-3 py-2" required></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-4">
+        <button type="button" id="closeModalBtn"
+                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">Cancel</button>
+        <button type="submit"
+                class="bg-mcmGreen hover:bg-green-700 text-white px-5 py-2 rounded-lg">Save Template</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JS -->
+<script>
+  // Modal open/close
+  const modal = document.getElementById('templateModal');
+  document.getElementById('openModalBtn').onclick = () => modal.classList.remove('hidden');
+  document.getElementById('closeModalBtn').onclick = () => modal.classList.add('hidden');
+
+  // Create template AJAX (keeps your existing logic)
+  document.getElementById('templateForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const res = await fetch("{% url 'admissions:create_message_template' %}", {
+      method: "POST",
+      headers: { "X-CSRFToken": formData.get("csrfmiddlewaretoken") },
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("✅ Template added successfully!");
+      const select = document.getElementById("templateSelect");
+      const option = document.createElement("option");
+      option.value = data.id;
+      option.text = `${data.title} (${data.category || 'General'})`;
+      select.add(option);
+      select.value = data.id;
+      modal.classList.add('hidden');
+      e.target.reset();
+    } else {
+      alert("❌ " + (data.error || "Failed to create template"));
+    }
+  };
+
+  // Preview button behaviour
+  document.getElementById('previewBtn').addEventListener('click', function () {
+    const templateId = document.getElementById('templateSelect').value;
+    if (!templateId) {
+      alert('Please select a message template to preview.');
+      return;
+    }
+    // open preview in new tab — ensure you have a view at /admissions/broadcast-preview/
+    const previewUrl = `/admissions/broadcast-preview/?template_id=${encodeURIComponent(templateId)}`;
+    window.open(previewUrl, '_blank', 'noopener');
+  });
+
+  // (Optional) keyboard accessibility: enter on select to preview
+  document.getElementById('templateSelect').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      document.getElementById('previewBtn').click();
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-mcmGreen to-gray-900 p-6">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-3xl">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <img src="/static/images/logo.png" alt="MCM Logo" class="mx-auto w-20 mb-4">
+      <h1 class="text-2xl font-bold text-mcmGreen">Complete Application Form</h1>
+      <p class="text-gray-500 text-sm mt-1">Fill all the required fields carefully</p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- 🟢 REQUIRED FIX: Class Name Hidden Field -->
+      <input type="hidden" id="id_class_name" name="class_name" value="{{ application.class_name }}">
+    
+
+      <!-- Non-field Errors -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-100 text-red-700 border border-red-300 rounded-lg p-3 mb-4">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Mobile Number -->
+      <div>
+        <label for="phone" class="block text-sm font-semibold text-gray-700 mb-1">
+          Mobile Number
+        </label>
+        <input
+          type="text"
+          id="phone"
+          name="phone"
+          value="{{ user_phone }}"
+          placeholder="Enter your mobile number"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-mcmGreen"
+          required
+        >
+      </div>
+
+      <!-- Main Form Fields -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Personal Info -->
+      {% for field in form.visible_fields %}
+        {% if field.name not in "shaheed_status shaheed_in marksheet_9th percentage_9th marksheet_10th percentage_10th" %}
+          <div id="field-wrapper-{{ field.name }}">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
+              <p class="text-red-600 text-sm mt-1">{{ field.errors|striptags }}</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+
+        <!-- Shaheed Fields -->
+        <div id="field-wrapper-shaheed_status">
+          {{ form.shaheed_status.label_tag }} {{ form.shaheed_status }}
+          {% if form.shaheed_status.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.shaheed_status.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <div id="field-wrapper-shaheed_in">
+          {{ form.shaheed_in.label_tag }} {{ form.shaheed_in }}
+          {% if form.shaheed_in.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.shaheed_in.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Class XI Academic Block -->
+      <div id="xi-academic-block"
+           class="mt-8 p-4 border border-gray-300 rounded-xl bg-gray-50 hidden">
+
+        <h2 class="text-lg font-semibold text-mcmGreen mb-3">
+          Academic Information (Class XI Only)
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">
+              9th Class Marksheet (PDF/JPG)
+            </label>
+            {{ form.marksheet_9th }}
+            {% if form.marksheet_9th.errors %}
+              <p class="text-red-600 text-sm mt-1">{{ form.marksheet_9th.errors|striptags }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">
+              Percentage Obtained in 9th
+            </label>
+            {{ form.percentage_9th }}
+            <p id="xi-msg-9th" class="text-red-600 text-sm mt-1 hidden">
+              Minimum 60% required for Class XI.
+            </p>
+            {% if form.percentage_9th.errors %}
+              <p class="text-red-600 text-sm mt-1">{{ form.percentage_9th.errors|striptags }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">
+              10th Class Marksheet (Optional)
+            </label>
+            {{ form.marksheet_10th }}
+            {% if form.marksheet_10th.errors %}
+              <p class="text-red-600 text-sm mt-1">{{ form.marksheet_10th.errors|striptags }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">
+              Percentage Obtained in 10th (Optional)
+            </label>
+            {{ form.percentage_10th }}
+            <p id="xi-msg-10th" class="text-red-600 text-sm mt-1 hidden">
+              Minimum 60% required if percentage is entered.
+            </p>
+            {% if form.percentage_10th.errors %}
+              <p class="text-red-600 text-sm mt-1">{{ form.percentage_10th.errors|striptags }}</p>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit"
+        class="w-full bg-mcmGreen hover:bg-mcmOlive text-white font-semibold py-2 rounded-lg transition shadow-md mt-6">
+        Submit Application
+      </button>
+    </form>
+  </div>
+</div>
+
+
+
+
+<!-- ✅ Dynamic JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const categoryField = document.querySelector('#id_category');
+  const shaheedFieldDiv = document.querySelector('#field-wrapper-shaheed_status');
+  const shaheedInFieldDiv = document.querySelector('#field-wrapper-shaheed_in');
+  const shaheedSelect = document.querySelector('#id_shaheed_status');
+  const shaheedInSelect = document.querySelector('#id_shaheed_in');
+
+  const armyNoDiv = document.querySelector('#field-wrapper-army_no');
+  const rankDiv = document.querySelector('#field-wrapper-rank');
+  const armDiv = document.querySelector('#field-wrapper-arm');
+  const armInfoDiv = document.querySelector('#field-wrapper-arm_info');
+
+  // Initially hide shaheed fields
+  if (shaheedFieldDiv) shaheedFieldDiv.style.display = 'none';
+  if (shaheedInFieldDiv) shaheedInFieldDiv.style.display = 'none';
+
+  // 🟢 Show/hide Shaheed fields only for Retired Officers & JCOs
+  function updateShaheedVisibility() {
+    const category = categoryField ? categoryField.value : '';
+    const showShaheed = ['offr_retired', 'jcos_retired'].includes(category);
+
+    if (showShaheed) {
+      shaheedFieldDiv.style.display = 'block';
+    } else {
+      // Hide and reset both fields
+      shaheedFieldDiv.style.display = 'none';
+      shaheedInFieldDiv.style.display = 'none';
+      if (shaheedSelect) shaheedSelect.value = '';
+      if (shaheedInSelect) shaheedInSelect.value = '';
+    }
+  }
+
+  // 🟢 Show “Shaheed In” only when “Shaheed = Yes”
+  function updateShaheedInVisibility() {
+    const shaheedStatus = shaheedSelect ? shaheedSelect.value : '';
+    if (shaheedStatus === 'Yes') {
+      shaheedInFieldDiv.style.display = 'block';
+    } else {
+      shaheedInFieldDiv.style.display = 'none';
+      if (shaheedInSelect) shaheedInSelect.value = '';
+    }
+  }
+
+  // 🟢 Army Info visibility logic
+  function updateArmyFieldsVisibility() {
+    const category = categoryField ? categoryField.value : '';
+    const civilianLike = [
+      'civilian', 'fata', 'balochistan', 'gilgit',
+      'ajk', 'navy_airforce'
+    ];
+
+    if (civilianLike.includes(category)) {
+      [armyNoDiv, rankDiv, armDiv, armInfoDiv].forEach(div => div && (div.style.display = 'none'));
+      ['#id_army_no', '#id_rank', '#id_arm', '#id_arm_info'].forEach(id => {
+        const input = document.querySelector(id);
+        if (input) input.value = '';
+      });
+    } else {
+      [armyNoDiv, rankDiv, armDiv, armInfoDiv].forEach(div => div && (div.style.display = 'block'));
+    }
+  }
+
+  // 🟢 Event listeners
+  if (categoryField) {
+    categoryField.addEventListener('change', () => {
+      updateShaheedVisibility();
+      updateArmyFieldsVisibility();
+      updateShaheedInVisibility();
+    });
+  }
+
+  if (shaheedSelect) {
+    shaheedSelect.addEventListener('change', updateShaheedInVisibility);
+  }
+
+  // Initialize on page load
+  updateShaheedVisibility();
+  updateShaheedInVisibility();
+  updateArmyFieldsVisibility();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ============
+  // XI Visibility
+  // ============
+  const classField = document.querySelector('#id_class_name');
+  const xiBlock = document.querySelector('#xi-academic-block');
+
+  const perc9 = document.querySelector('#id_percentage_9th');
+  const perc10 = document.querySelector('#id_percentage_10th');
+
+  const msg9 = document.getElementById('xi-msg-9th');
+  const msg10 = document.getElementById('xi-msg-10th');
+
+  function toggleXI() {
+    if (!classField) return;
+
+    if (classField.value === 'XI') {
+      xiBlock.classList.remove('hidden');
+    } else {
+      xiBlock.classList.add('hidden');
+      if (perc9) perc9.value = '';
+      if (perc10) perc10.value = '';
+      msg9.classList.add('hidden');
+      msg10.classList.add('hidden');
+    }
+  }
+
+  if (classField) classField.addEventListener('change', toggleXI);
+
+  // On initial page load:
+  toggleXI();
+
+  // Live percentage check (optional UX)
+  if (perc9) {
+    perc9.addEventListener('input', function () {
+      const v = parseFloat(this.value);
+      if (!isNaN(v) && v < 60) msg9.classList.remove('hidden');
+      else msg9.classList.add('hidden');
+    });
+  }
+
+  if (perc10) {
+    perc10.addEventListener('input', function () {
+      const v = parseFloat(this.value);
+      if (!isNaN(v) && v < 60) msg10.classList.remove('hidden');
+      else msg10.classList.add('hidden');
+    });
+  }
+
+  // -------------------------------------------------------
+  // 🌟 Filter Test Centers for Class XI (Frontend Logic)
+  // -------------------------------------------------------
+  const testCenterSelect = document.querySelector('#id_test_center');
+  if (testCenterSelect && classField && classField.value === 'XI') {
+      const allowedCenters = ['Peshawar', 'Rawalpindi2', 'Jhelum', 'Lahore', 'Multan', 'Quetta', 'Karachi', 'Murree'];
+      
+      Array.from(testCenterSelect.options).forEach(option => {
+          if (option.value && !allowedCenters.includes(option.value)) {
+              option.style.display = 'none'; // Hide unauthorized centers
+          }
+      });
+  }
+
+});
+</script>
+
+
+
+<style>
+  input, select, textarea {
+    @apply w-full border border-gray-300 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-mcmGreen;
+  }
+</style>
+
+{% endblock %}

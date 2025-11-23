@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="max-w-6xl mx-auto bg-white p-8 mt-10 rounded-2xl shadow-lg border border-gray-200">
+
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row justify-between items-center border-b pb-4 mb-6">
+    <h1 class="text-2xl font-bold text-mcmGreen flex items-center gap-2">
+      🧾 Full Applicant Details
+    </h1>
+    <div class="flex gap-3 mt-3 md:mt-0">
+      <button onclick="window.print()"
+        class="bg-mcmGold text-gray-900 px-4 py-2 rounded-lg font-semibold shadow hover:bg-yellow-400 transition">
+        🖨️ Print Application
+      </button>
+      <a href="{% url 'admissions:admin_dashboard' %}"
+        class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition">
+        ⬅ Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Applicant Core Details -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-gray-800 text-sm mb-8">
+
+    <!-- Column 1: Personal Info -->
+    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+      <h3 class="font-bold text-mcmGreen mb-3 border-b pb-2">👤 Personal Information</h3>
+      <div class="space-y-2">
+        <p><span class="font-semibold text-gray-600">Name:</span> {{ app.name }}</p>
+        <p><span class="font-semibold text-gray-600">Father's Name:</span> {{ app.father_name }}</p>
+        <p><span class="font-semibold text-gray-600">Mother's Name:</span> {{ app.mother_name|default:"—" }}</p>
+        <p><span class="font-semibold text-gray-600">Guardian:</span> {{ app.guardian|default:"—" }}</p>
+        <p><span class="font-semibold text-gray-600">Date of Birth:</span> {{ app.dob|date:"M d, Y" }}</p>
+        <p><span class="font-semibold text-gray-600">CNIC/Form-B:</span> {{ app.form_b|default:"—" }}</p>
+        <p><span class="font-semibold text-gray-600">Father CNIC:</span> {{ app.father_cnic|default:"—" }}</p>
+        <p><span class="font-semibold text-gray-600">Mother CNIC:</span> {{ app.mother_cnic|default:"—" }}</p>
+        <p><span class="font-semibold text-gray-600">Religion:</span> {{ app.religion|default:"—" }}</p>
+        <p><span class="font-semibold text-gray-600">Domicile:</span> {{ app.domicile|default:"—" }}</p>
+      </div>
+    </div>
+
+    <!-- Column 2: Application & Contact -->
+    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+      <h3 class="font-bold text-mcmGreen mb-3 border-b pb-2">📝 Application & Contact</h3>
+      <div class="space-y-2">
+        <p><span class="font-semibold text-gray-600">Class Applied:</span> <span class="font-bold">{{ app.class_name
+            }}</span></p>
+        <p><span class="font-semibold text-gray-600">Roll Number:</span> <span
+            class="font-mono font-bold text-blue-600">{{ app.roll_number|default:"Pending" }}</span></p>
+        <p><span class="font-semibold text-gray-600">Category:</span> {{ app.get_category_display }}</p>
+        <p><span class="font-semibold text-gray-600">Test Center:</span> {{ app.get_test_center_display }}</p>
+        <p><span class="font-semibold text-gray-600">Submission Date:</span> {{ app.submission_date|date:"M d, Y" }}</p>
+        <div class="my-2 border-t border-gray-200"></div>
+        <p><span class="font-semibold text-gray-600">Mobile No:</span> {{ app.mobile_no|default:app.user.phone }}</p>
+        <p><span class="font-semibold text-gray-600">Landline:</span> {{ app.landline_no|default:"—" }}</p>
+        <p><span class="font-semibold text-gray-600">Address:</span></p>
+        <p class="text-xs text-gray-600 bg-white p-2 rounded border border-gray-100">{{ app.postal_address|default:"—"
+          }}</p>
+      </div>
+    </div>
+
+    <!-- Column 3: Army / Professional Details -->
+    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+      <h3 class="font-bold text-mcmGreen mb-3 border-b pb-2">🎖️ Professional / Army Details</h3>
+      <div class="space-y-2">
+        <p><span class="font-semibold text-gray-600">Father's Occupation:</span> {{ app.father_occupation|default:"—" }}
+        </p>
+
+        {% if app.category != 'civilian' %}
+        <div class="mt-2 pt-2 border-t border-gray-200">
+          <p><span class="font-semibold text-gray-600">Army No:</span> {{ app.army_no|default:"—" }}</p>
+          <p><span class="font-semibold text-gray-600">Rank:</span> {{ app.rank|default:"—" }}</p>
+          <p><span class="font-semibold text-gray-600">Unit / Arm:</span> {{ app.arm|default:"—" }}</p>
+
+          {% if app.shaheed_status == 'yes' or "Shaheed" in app.admin_remarks %}
+          <div class="mt-2 bg-red-50 p-2 rounded border border-red-100 text-red-800">
+            <p class="font-bold text-xs uppercase">⚠️ Shaheed Status</p>
+            <p>{{ app.get_shaheed_in_display|default:"Yes" }}</p>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <p class="text-gray-400 italic mt-2">Not applicable for civilians.</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Academic Details (Class XI Only) -->
+  {% if app.class_name == 'XI' %}
+  <div class="bg-blue-50 rounded-xl p-5 border border-blue-100 mb-6">
+    <h3 class="text-lg font-semibold text-blue-800 mb-3">📚 Academic Record (Class XI)</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- 9th Class -->
+      <div class="bg-white p-4 rounded-lg shadow-sm">
+        <h4 class="font-bold text-gray-700 mb-2">9th Class</h4>
+        <p class="text-sm mb-2">Percentage: <span class="font-bold">{{ app.percentage_9th }}%</span></p>
+        {% if app.marksheet_9th %}
+        <a href="{{ app.marksheet_9th.url }}" target="_blank"
+          class="text-blue-600 text-sm hover:underline flex items-center gap-1">
+          📄 View 9th Marksheet
+        </a>
+        {% else %}
+        <span class="text-gray-400 text-sm">No marksheet uploaded</span>
+        {% endif %}
+      </div>
+
+      <!-- 10th Class -->
+      <div class="bg-white p-4 rounded-lg shadow-sm">
+        <h4 class="font-bold text-gray-700 mb-2">10th Class</h4>
+        <p class="text-sm mb-2">Percentage: <span class="font-bold">{{ app.percentage_10th|default:"Result Awaited"
+            }}%</span></p>
+        {% if app.marksheet_10th %}
+        <a href="{{ app.marksheet_10th.url }}" target="_blank"
+          class="text-blue-600 text-sm hover:underline flex items-center gap-1">
+          📄 View 10th Marksheet
+        </a>
+        {% else %}
+        <span class="text-gray-400 text-sm">No marksheet uploaded</span>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Divider -->
+  <div class="border-t border-gray-200 my-6"></div>
+
+  <!-- Photo Section -->
+  {% if app.photo %}
+  <div class="mb-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">📸 Applicant Photo</h3>
+    <img src="{{ app.photo.url }}" alt="Applicant Photo" class="w-40 rounded-xl shadow border border-gray-300">
+  </div>
+  {% endif %}
+
+  <!-- Challan Information -->
+  <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 mb-6">
+    <h3 class="text-lg font-semibold text-mcmGreen mb-3">💳 Challan Information</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+      <p><strong>Challan No:</strong> {{ app.challan_no|default:"—" }}</p>
+      <p><strong>Challan Date:</strong> {{ app.challan_date|date:"M d, Y"|default:"—" }}</p>
+      <p><strong>Fee Amount:</strong> Rs {{ app.amount|default:"—" }}</p>
+      <p><strong>Total Fee (Original):</strong> Rs {{ app.total_fee|default:"—" }}</p>
+    </div>
+  </div>
+
+  <!-- Payment Proof Section -->
+  <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+    <h3 class="text-lg font-semibold text-mcmGreen mb-3">🏦 Bank Challan / Payment Slip</h3>
+    {% if app.payment_proof %}
+    <div class="flex flex-col items-center">
+      <img src="{{ app.payment_proof.url }}" alt="Payment Proof"
+        class="max-h-96 rounded-lg shadow border border-gray-200 object-contain mb-3">
+      <a href="{{ app.payment_proof.url }}" target="_blank"
+        class="text-blue-600 hover:text-blue-800 underline text-sm font-semibold">
+        🔍 View Full Image
+      </a>
+    </div>
+    {% else %}
+    <p class="text-gray-500 italic">No payment proof uploaded yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Print Styles -->
+<style>
+  @media print {
+    body {
+      background: white !important;
+    }
+
+    a,
+    button {
+      display: none !important;
+    }
+
+    .shadow,
+    .border,
+    .rounded-xl {
+      box-shadow: none !important;
+      border: none !important;
+    }
+  }
+</style>
+
+{% endblock %}
