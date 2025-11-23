@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
 import uuid
@@ -234,20 +234,22 @@ class Application(models.Model):
 
         # Find the highest existing sequence for this prefix
         # We filter by prefix and find the max value
-        last_app = Application.objects.filter(
-            roll_number__startswith=f"{prefix}-"
-        ).order_by('roll_number').last()
+        # LOCKING: Use select_for_update to prevent race conditions during bulk verify
+        with transaction.atomic():
+            last_app = Application.objects.filter(
+                roll_number__startswith=f"{prefix}-"
+            ).select_for_update().order_by('roll_number').last()
 
-        if last_app and last_app.roll_number:
-            try:
-                # Extract sequence part (e.g., "0005" from "8-0005")
-                last_seq = int(last_app.roll_number.split('-')[-1])
-                new_seq = last_seq + 1
-            except ValueError:
-                # Fallback if format is unexpected
+            if last_app and last_app.roll_number:
+                try:
+                    # Extract sequence part (e.g., "0005" from "8-0005")
+                    last_seq = int(last_app.roll_number.split('-')[-1])
+                    new_seq = last_seq + 1
+                except ValueError:
+                    # Fallback if format is unexpected
+                    new_seq = 1
+            else:
                 new_seq = 1
-        else:
-            new_seq = 1
 
         return f"{prefix}-{new_seq:04d}"
 
