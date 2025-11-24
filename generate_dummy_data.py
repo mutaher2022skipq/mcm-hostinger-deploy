@@ -23,6 +23,10 @@ def create_dummy_data():
     # Prefetch existing usernames to avoid collision
     existing_usernames = set(User.objects.values_list('username', flat=True))
 
+    # Optimization: Hash password ONCE to avoid 2000x CPU calculation
+    from django.contrib.auth.hashers import make_password
+    password_hash = make_password("password123")
+
     for i in range(2000):
         username = f"dummy_user_{i}"
         if username in existing_usernames:
@@ -30,7 +34,7 @@ def create_dummy_data():
             
         # Create User
         user = User(username=username, email=f"{username}@example.com")
-        user.set_password("password123")
+        user.password = password_hash  # Assign pre-calculated hash
         users.append(user)
 
     # Bulk create users
