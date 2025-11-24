@@ -99,6 +99,7 @@ DATABASES = {
         'PASSWORD': 'mcm_pass_@@@',   # your real password
         'HOST': 'localhost',
         'PORT': '5432',
+        'CONN_MAX_AGE': 600,  # ⚡ Persistent connections (10 mins) for high load
     }
 }
 

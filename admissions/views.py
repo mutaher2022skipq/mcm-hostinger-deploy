@@ -653,12 +653,18 @@ def verify_challan_list(request):
         ('pending', 'Pending'),
     ]
 
+    # Pagination: Show 50 per page to prevent crash with 5000+ records
+    paginator = Paginator(challans, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'challans': challans,
+        'challans': page_obj,  # Pass the page object instead of full queryset
         'categories': categories,
         'statuses': statuses,
         'category_filter': category_filter,
         'status_filter': status_filter,
+        'page_obj': page_obj,  # For template pagination controls
     }
     return render(request, 'admissions/verify_challans.html', context)
 
