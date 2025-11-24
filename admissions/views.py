@@ -893,9 +893,14 @@ def admin_dashboard(request):
 
     sessions = AdmissionSession.objects.all().order_by('class_name')
 
+    # ✅ Pagination (Initial Load) - Prevent crash with 5000+ records
+    paginator = Paginator(applications, 50)  # Show 50 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     # ✅ Updated Context
     context = {
-        'applications': applications,
+        'applications': page_obj,  # Pass page_obj instead of full queryset
         'total': total,
         'verified': verified,
         'under_review': under_review,
@@ -906,6 +911,7 @@ def admin_dashboard(request):
         'category_filter': category_filter,
         'status_filter': status_filter,
         'sessions': sessions,
+        'page_obj': page_obj,
     }
 
     # ✅ Template path
@@ -959,7 +965,7 @@ def admin_applicants_api(request):
 
     # 📄 Pagination
     page = int(request.GET.get('page', 1))
-    per_page = 500
+    per_page = 50  # Reduced from 500 to 50 for performance
     paginator = Paginator(qs, per_page)
     page_obj = paginator.get_page(page)
 
