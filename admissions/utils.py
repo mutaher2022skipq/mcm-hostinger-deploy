@@ -11,89 +11,207 @@ from .models import FeeConfig, FeeCategoryConfig
 
 
 def generate_roll_number_pdf(application):
-    """Generates a clean, printable Roll Number Slip PDF and returns it as bytes."""
+    """Generates a professional, beautifully styled Roll Number Slip PDF with MCM branding."""
     buffer = BytesIO()
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
-
-    # 🔰 Header
-    p.setFont("Helvetica-Bold", 18)
-    p.drawCentredString(width / 2, height - 70, "MILITARY COLLEGE MURREE")
+    
+    # 🎨 MCM Brand Colors
+    MCM_GREEN = colors.HexColor("#005430")  # Dark Green
+    MCM_GOLD = colors.HexColor("#DAA520")   # Gold
+    LIGHT_GRAY = colors.HexColor("#F9F9F9") # Light Gray
+    DARK_TEXT = colors.HexColor("#212121")  # Dark Gray/Black
+    
+    # ═══════════════════════════════════════════════════════
+    # 🎨 PROFESSIONAL HEADER BAND (Green Background)
+    # ═══════════════════════════════════════════════════════
+    p.setFillColor(MCM_GREEN)
+    p.rect(40, height - 110, width - 80, 75, fill=1, stroke=0)
+    
+    # Header Text (White on Green)
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 20)
+    p.drawCentredString(width / 2, height - 60, "MILITARY COLLEGE MURREE")
+    
+    # Subtitle (Gold)
+    p.setFillColor(MCM_GOLD)
     p.setFont("Helvetica-Bold", 13)
-    p.drawCentredString(width / 2, height - 90, "ROLL NUMBER SLIP – ENTRANCE TEST 2026")
-
-    # 🏫 Logo
+    p.drawCentredString(width / 2, height - 85, "ROLL NUMBER SLIP – ENTRANCE TEST 2026")
+    
+    # Reset color
+    p.setFillColor(DARK_TEXT)
+    
+    # ═══════════════════════════════════════════════════════
+    # 🏫 LOGO (Circular Badge with Gold Border)
+    # ═══════════════════════════════════════════════════════
     logo_path = os.path.join(settings.BASE_DIR, "static", "images", "logo.png")
     if os.path.exists(logo_path):
-        p.drawImage(logo_path, 70, height - 130, width=60, height=60, preserveAspectRatio=True)
-
-    # 🪪 Candidate Photo
+        # Gold circle background
+        p.setFillColor(MCM_GOLD)
+        p.circle(85, height - 75, 35, fill=1, stroke=0)
+        # Logo image
+        p.drawImage(logo_path, 55, height - 105, width=60, height=60, preserveAspectRatio=True, mask='auto')
+    
+    # ═══════════════════════════════════════════════════════
+    # 🎫 ROLL NUMBER HIGHLIGHT BOX (Gold Background)
+    # ═══════════════════════════════════════════════════════
+    roll_y = height - 160
+    p.setFillColor(MCM_GOLD)
+    p.roundRect(60, roll_y - 35, 220, 45, 8, fill=1, stroke=0)
+    
+    # Roll Number Text (Large, Bold, White)
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(75, roll_y - 15, "Roll Number:")
+    p.setFont("Helvetica-Bold", 22)
+    p.drawString(75, roll_y - 32, application.roll_number or "—")
+    
+    # Reset color
+    p.setFillColor(DARK_TEXT)
+    
+    # ═══════════════════════════════════════════════════════
+    # 🪪 CANDIDATE PHOTO (Framed with Green Border)
+    # ═══════════════════════════════════════════════════════
+    photo_x = width - 165
+    photo_y = height - 225
+    
     if application.photo:
         try:
-            p.drawImage(application.photo.path, width - 150, height - 230, width=100, height=100)
+            # Green border frame
+            p.setStrokeColor(MCM_GREEN)
+            p.setLineWidth(3)
+            p.rect(photo_x - 3, photo_y - 3, 116, 116, fill=0, stroke=1)
+            # Photo
+            p.drawImage(application.photo.path, photo_x, photo_y, width=110, height=110, preserveAspectRatio=True, mask='auto')
         except Exception:
             p.setFont("Helvetica-Oblique", 9)
-            p.drawString(width - 150, height - 230, "[Photo not available]")
-
-    # 📋 Applicant Details
-    p.setFont("Helvetica", 11)
+            p.setFillColor(colors.gray)
+            p.drawString(photo_x + 10, photo_y + 50, "[Photo not available]")
+    
+    # ═══════════════════════════════════════════════════════
+    # 📋 APPLICANT DETAILS TABLE (Professional Styling)
+    # ═══════════════════════════════════════════════════════
+    table_y = height - 270
+    
     details = [
-        ["Roll Number", application.roll_number or "—"],
         ["Candidate Name", application.name],
         ["Father's Name", application.father_name],
         ["Category", dict(application.CATEGORY_CHOICES).get(application.category, application.category or "—")],
         ["Test Center", dict(application.TEST_CENTERS).get(application.test_center, application.test_center or "—")],
         ["Date of Birth", application.dob.strftime("%d-%b-%Y") if application.dob else "—"],
     ]
-    table = Table(details, colWidths=[150, 350])
+    
+    table = Table(details, colWidths=[140, 360])
     table.setStyle(TableStyle([
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
-        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("FONT", (0, 0), (-1, -1), "Helvetica", 11),
-        ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.grey),
-        ("BOX", (0, 0), (-1, -1), 0.75, colors.black),
+        # Header styling (labels)
+        ("BACKGROUND", (0, 0), (0, -1), MCM_GREEN),
+        ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+        ("FONT", (0, 0), (0, -1), "Helvetica-Bold", 11),
+        
+        # Value cells - alternating colors
+        ("BACKGROUND", (1, 0), (1, 0), LIGHT_GRAY),
+        ("BACKGROUND", (1, 2), (1, 2), LIGHT_GRAY),
+        ("BACKGROUND", (1, 4), (1, 4), LIGHT_GRAY),
+        
+        # All text styling
+        ("TEXTCOLOR", (1, 0), (1, -1), DARK_TEXT),
+        ("FONT", (1, 0), (1, -1), "Helvetica", 11),
+        ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+        ("ALIGN", (1, 0), (1, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        
+        # Borders
+        ("LINEBELOW", (0, 0), (-1, -2), 0.5, colors.lightgrey),
+        ("BOX", (0, 0), (-1, -1), 2, MCM_GREEN),
+        
+        # Padding
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
     ]))
-    table.wrapOn(p, 80, height - 300)
-    table.drawOn(p, 80, height - 380)
-
-    # 🕒 Exam Instructions
-    y = height - 420
-    p.setFont("Helvetica-Bold", 11)
-    p.drawString(80, y, "INSTRUCTIONS:")
+    
+    table.wrapOn(p, 60, table_y)
+    table.drawOn(p, 60, table_y - 120)
+    
+    # ═══════════════════════════════════════════════════════
+    # ⚠ INSTRUCTIONS BOX (Green Header, White Background)
+    # ═══════════════════════════════════════════════════════
+    instr_y = table_y - 160
+    
+    # Header box
+    p.setFillColor(MCM_GREEN)
+    p.rect(60, instr_y, width - 120, 30, fill=1, stroke=0)
+    
+    # Header text
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 13)
+    p.drawString(75, instr_y + 10, "⚠ IMPORTANT INSTRUCTIONS")
+    
+    # Instructions background
+    p.setFillColor(colors.white)
+    p.setStrokeColor(MCM_GREEN)
+    p.setLineWidth(2)
+    p.rect(60, instr_y - 150, width - 120, 150, fill=1, stroke=1)
+    
+    # Instructions text
+    p.setFillColor(DARK_TEXT)
     p.setFont("Helvetica", 10)
-
+    
     # Dynamic instructions based on class
     if application.class_name == 'XI':
         lines = [
-            "1. Report at the respective center by 0800 hrs.",
-            "2. The written test will start at 0900 hrs and last 4 hours (till 1300 hrs).",
-            "3. Subjects: English, Mathematics, Physics, Chemistry.",
-            "4. Bring this printed Roll Number Slip and writing material. Calculator is also allowed.",
-            "5. Bring writing material; exam booklet will be provided.",
-            "6. Mobile phones are strictly prohibited.",
-            "7. Parents/Guardians must bring CNIC.",
+            "1. ✓ Report at the respective center by 0800 hrs.",
+            "2. 📅 The written test will start at 0900 hrs and last 4 hours (till 1300 hrs).",
+            "3. ✏ Subjects: English, Mathematics, Physics, Chemistry.",
+            "4. 📋 Bring this printed Roll Number Slip and writing material. Calculator is also allowed.",
+            "5. 📝 Bring writing material; exam booklet will be provided.",
+            "6. ⛔ Mobile phones are strictly prohibited.",
+            "7. 👨‍👩‍👦 Parents/Guardians must bring CNIC.",
         ]
     else:
         # Default for Class VIII
         lines = [
-            "1. Report at the respective center by 0800 hrs.",
-            "2. The written test will start at 0900 hrs and last 3 hours (till 1200 hrs).",
-            "3. Subjects: English, Mathematics, Urdu, Islamiat.",
-            "4. Bring this printed Roll Number Slip and your CNIC/Form-B.",
-            "5. Bring writing material; exam booklet will be provided.",
-            "6. Mobile phones are strictly prohibited.",
-            "7. Parents/Guardians must bring CNIC.",
+            "1. ✓ Report at the respective center by 0800 hrs.",
+            "2. 📅 The written test will start at 0900 hrs and last 3 hours (till 1200 hrs).",
+            "3. ✏ Subjects: English, Mathematics, Urdu, Islamiat.",
+            "4. 📋 Bring this printed Roll Number Slip and your CNIC/Form-B.",
+            "5. 📝 Bring writing material; exam booklet will be provided.",
+            "6. ⛔ Mobile phones are strictly prohibited.",
+            "7. 👨‍👩‍👦 Parents/Guardians must bring CNIC.",
         ]
-
+    
+    y = instr_y - 20
     for line in lines:
+        p.drawString(75, y, line)
         y -= 18
-        p.drawString(100, y, line)
-
-    y -= 30
+    
+    # ═══════════════════════════════════════════════════════
+    # 📧 FOOTER (Gold Line + Contact Info)
+    # ═══════════════════════════════════════════════════════
+    footer_y = 80
+    
+    # Gold separator line
+    p.setStrokeColor(MCM_GOLD)
+    p.setLineWidth(2)
+    p.line(60, footer_y + 30, width - 60, footer_y + 30)
+    
+    # Footer text
+    p.setFillColor(MCM_GREEN)
     p.setFont("Helvetica-Oblique", 9)
-    p.drawString(80, y, "Admission Office – Military College Murree")
-    p.line(80, y - 25, width - 80, y - 25)
-
+    p.drawCentredString(width / 2, footer_y + 10, "Admission Office – Military College Murree")
+    
+    p.setFillColor(colors.gray)
+    p.setFont("Helvetica", 8)
+    p.drawCentredString(width / 2, footer_y - 5, "📧 admission@mcm.edu.pk  |  📞 +92-51-9272516")
+    
+    # ═══════════════════════════════════════════════════════
+    # 🔲 PAGE BORDER (Double Green Frame)
+    # ═══════════════════════════════════════════════════════
+    p.setStrokeColor(MCM_GREEN)
+    p.setLineWidth(3)
+    p.rect(30, 50, width - 60, height - 100, fill=0, stroke=1)
+    
     p.showPage()
     p.save()
     pdf_data = buffer.getvalue()
