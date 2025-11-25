@@ -80,8 +80,8 @@ def generate_roll_number_pdf(application):
     # ═══════════════════════════════════════════════════════
     # 🪪 CANDIDATE PHOTO (Framed with Green Border)
     # ═══════════════════════════════════════════════════════
-    photo_x = width - 180
-    photo_y = height - 235
+    photo_x = width - 160
+    photo_y = height - 260
     
     if application.photo:
         try:
@@ -109,7 +109,7 @@ def generate_roll_number_pdf(application):
         ["Date of Birth", application.dob.strftime("%d-%b-%Y") if application.dob else "—"],
     ]
     
-    table = Table(details, colWidths=[140, 350])
+    table = Table(details, colWidths=[135, 330])
     table.setStyle(TableStyle([
         # Header styling (labels)
         ("BACKGROUND", (0, 0), (0, -1), MCM_GREEN),
