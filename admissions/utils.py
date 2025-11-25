@@ -80,7 +80,7 @@ def generate_roll_number_pdf(application):
     # ═══════════════════════════════════════════════════════
     # 🪪 CANDIDATE PHOTO (Framed with Green Border)
     # ═══════════════════════════════════════════════════════
-    photo_x = width - 165
+    photo_x = width - 180
     photo_y = height - 235
     
     if application.photo:
@@ -109,7 +109,7 @@ def generate_roll_number_pdf(application):
         ["Date of Birth", application.dob.strftime("%d-%b-%Y") if application.dob else "—"],
     ]
     
-    table = Table(details, colWidths=[140, 430])
+    table = Table(details, colWidths=[140, 350])
     table.setStyle(TableStyle([
         # Header styling (labels)
         ("BACKGROUND", (0, 0), (0, -1), MCM_GREEN),
@@ -140,7 +140,7 @@ def generate_roll_number_pdf(application):
     ]))
     
     table.wrapOn(p, 60, table_y)
-    table.drawOn(p, 50, table_y - 120)
+    table.drawOn(p, 60, table_y - 120)
     
     # ═══════════════════════════════════════════════════════
     # ⚠ INSTRUCTIONS BOX (Green Header, White Background)
